@@ -1,40 +1,25 @@
-WEARHOUSE — DRIVER-INITIATED DELIVERY WORKFLOW (10 NOV 2026)
+WEARHOUSE — MANAGER-ONLY DELIVERY CREATION (NOV 2026)
 
-SUPABASE TRADE
-- Database changes are ALREADY APPLIED to the existing Supabase Trade project.
-- DO NOT re-run older ADMIN-DELIVERY-MIGRATION.sql or schema.sql.
-- Existing Trade, Tasks, products, staff, and serials were not intentionally reset.
+WORKFLOW:
+1. Only a manager creates the delivery order. Select driver, products, quantities, destination, recipient, and date.
+2. Employee sees the assigned order. They type the first characters of a serial number and select EXACT matching serial numbers for each product and quantity. They cannot create an independent order.
+3. Serial selection goes to Pending manager approval. Manager reviews and chooses Approve or Reject. Rejection returns the order to the employee for correction.
+4. Only after approval can employee upload 1–6 delivery photos plus a delivery note (PDF or image).
+5. Manager reviews evidence and marks Completed. A manager can cancel an uncompleted order.
 
-UPDATE YOUR GITHUB PAGES SITE
-1. Open your existing Wearhouse GitHub repository.
-2. Replace these 4 files in the site root: index.html, app.js, styles.css, config.js.
-3. Commit changes to the branch configured for GitHub Pages.
-4. Wait for GitHub Pages to finish deployment, then refresh the site with Ctrl+F5.
-5. Sign out and sign in again, if the older cached UI is still shown.
+DATABASE:
+- Database changes have already been applied to the connected Supabase Trade project.
+- DO NOT rerun schema.sql, old migrations, or reset the database.
+- Existing Trade tables, inventory and previous delivery requests were not intentionally removed.
 
-NEW WORKFLOW
-Manager:
-- Adds products and their unique serial numbers using Staff / Admin and Serials.
-- Sees incoming requests and notifications under Delivery / Installation.
-- Opens delivery photos and delivery note, then confirms Completed (or cancels).
+GITHUB PAGES:
+1. Unzip this archive. Upload/replace index.html, app.js, styles.css and config.js in the ROOT of the Wearhouse GitHub repository.
+2. Commit the files on the branch configured for GitHub Pages.
+3. Hard refresh the page (Ctrl+F5), then sign out and in again.
+4. Manager: Delivery / Installation > + New delivery order.
+5. Employee: Delivery / Installation > Choose serial numbers on an assigned order.
 
-Delivery employee:
-- Opens Delivery / Installation > + New delivery request.
-- Starts typing a serial or product name; matching AVAILABLE serials appear.
-- Selects one or multiple serials, enters destination, recipient, date and confirms.
-- Request shows Pending; manager receives an in-app notification.
-- Opens the pending request, uploads 1-6 delivery photos and a note (PDF or image).
-- Request becomes Proof submitted; manager can confirm Completed.
-
-SECURITY / DATA
-- Serial selection is transactional; no serial can be actively reserved twice.
-- Only authenticated, active delivery employees can create a new request.
-- Only managers can confirm/cancel request and mark pieces delivered.
-- Delivery evidence is stored in a private Supabase Storage bucket.
-- Existing old delivery requests remain readable via the legacy UI.
-- A single request can include multiple products and serials (up to 50).
-
-NOTE
-Website code is provided as a ZIP. These files have NOT been pushed to GitHub
-from this chat. The live website will continue showing the old version until
-these four files are committed to the published GitHub branch.
+IMPORTANT:
+- This ZIP does NOT publish itself to GitHub; the site must be updated manually.
+- All notices described above are in-app notifications.
+- Existing legacy delivery requests remain visible in a separate section.

@@ -1484,3 +1484,8 @@ dialog::backdrop{
 .evidence-grid img{width:100%;height:170px;object-fit:cover;border-radius:10px;border:1px solid rgba(142,174,183,.2)}
 .evidence-modal .smallbtn{display:inline-block;margin:8px 0}
 @media(max-width:600px){.serial-option{flex-direction:column;align-items:flex-start;gap:3px}.evidence-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.warehouse-line {padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1);align-items:end;}
+.warehouse-line .smallbtn {align-self:center;justify-self:start;margin-bottom:4px;}
+#moItems {max-height:280px;overflow:auto;margin-bottom:12px;}
+#driverAssignedItems {margin:10px 0 18px;gap:8px;display:flex;flex-wrap:wrap;}

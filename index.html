@@ -6,7 +6,7 @@
 <title>Warehouse — Inventory & Delivery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=9">
+<link rel="stylesheet" href="styles.css?v=12">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -73,18 +73,29 @@ SN-000002"></textarea><small class="field-note">For a new product, add every phy
   <button class="primary" id="saveSerialBtn">Save serial</button><p id="serialMsg" class="error"></p>
 </form></dialog>
 
+<dialog id="managerOrderDialog"><form id="managerOrderForm" class="modal glass">
+  <button type="button" class="close" onclick="managerOrderDialog.close()">×</button>
+  <span class="eyebrow">MANAGER ONLY · NEW DELIVERY ORDER</span><h2>Create delivery order.</h2>
+  <p>Only managers can create orders. Select the employee and required products. The employee must choose serial numbers for your approval.</p>
+  <label>Assigned delivery employee<select id="moDriver" required></select></label>
+  <div class="selected-label"><strong>Products and quantities</strong><button type="button" class="smallbtn" onclick="addManagerOrderLine()">+ Add product</button></div>
+  <div id="moItems"></div>
+  <div class="twocol"><label>Recipient<input id="moRecipient" maxlength="120" placeholder="Customer name"></label><label>Delivery date<input id="moDate" type="date" required></label></div>
+  <label>Destination / address<input id="moDestination" maxlength="200" required placeholder="Delivery address"></label>
+  <label>Instructions<textarea id="moNotes" maxlength="500" placeholder="Instructions for employee"></textarea></label>
+  <button class="primary" id="submitManagerOrderBtn">Create order · Assign employee</button><p id="managerOrderMsg" class="error" role="alert"></p>
+</form></dialog>
+
 <dialog id="driverRequestDialog"><form id="driverRequestForm" class="modal glass">
   <button type="button" class="close" onclick="driverRequestDialog.close()">×</button>
-  <span class="eyebrow">DELIVERY EMPLOYEE · NEW REQUEST</span><h2>Select your delivery items.</h2>
-  <p>Search each item's serial number. Matches appear as soon as you start typing. Select every item you are taking to the customer.</p>
-  <label>Find a serial number<input id="drSerialSearch" type="text" autocomplete="off" placeholder="Start typing serial or product…" aria-controls="drSerialOptions" aria-autocomplete="list"></label>
-  <div id="drSerialOptions" class="serial-autocomplete" role="listbox" aria-label="Matching serial numbers"></div>
-  <div class="selected-label"><strong>Selected items</strong><span id="drSelectedCount">0 selected</span></div>
+  <span class="eyebrow">EMPLOYEE · SERIAL SELECTION ONLY</span><h2>Confirm assigned items.</h2>
+  <p>The manager already created this order. Choose the exact serial numbers of the items you have. You cannot deliver until the manager approves them.</p>
+  <div id="driverAssignedItems" class="delivery-serial-list"></div>
+  <label>Search serial number<input id="drSerialSearch" type="text" autocomplete="off" placeholder="Start typing a serial or product…" aria-controls="drSerialOptions" aria-autocomplete="list"></label>
+  <div id="drSerialOptions" class="serial-autocomplete" role="listbox" aria-label="Matching assigned serial numbers"></div>
+  <div class="selected-label"><strong>Selected serials</strong><span id="drSelectedCount">0 selected</span></div>
   <div id="drSelectedList" class="selected-serials"></div>
-  <div class="twocol"><label>Recipient<input id="drRecipient" maxlength="120" placeholder="Recipient name"></label><label>Delivery date<input id="drDate" type="date" required></label></div>
-  <label>Destination / delivery address<input id="drDestination" maxlength="200" required placeholder="Customer site / address"></label>
-  <label>Delivery notes<textarea id="drNotes" maxlength="500" placeholder="Optional instructions"></textarea></label>
-  <button class="primary" id="submitDriverRequestBtn">Confirm items · Send pending request</button><p id="driverRequestMsg" class="error" role="alert"></p>
+  <button class="primary" id="submitDriverRequestBtn">Submit serials · Await manager approval</button><p id="driverRequestMsg" class="error" role="alert"></p>
 </form></dialog>
 
 <dialog id="deliveryNoteDialog"><form id="deliveryNoteForm" class="modal glass">
@@ -96,5 +107,5 @@ SN-000002"></textarea><small class="field-note">For a new product, add every phy
   <button class="primary" id="submitDeliveryNoteBtn">Submit delivery note</button><p id="deliveryNoteMsg" class="error"></p>
 </form></dialog>
 
-<script src="config.js?v=9"></script><script src="app.js?v=9"></script>
+<script src="config.js?v=12"></script><script src="app.js?v=12"></script>
 </body></html>

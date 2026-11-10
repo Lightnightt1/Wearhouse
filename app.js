@@ -459,7 +459,7 @@ function deliveries() {
   if (!isStaff()) return admin();
   const legacy = deliveryGroups().filter(g=>!g.some(r=>r.warehouse_order_id));
   const waiting = warehouseOrders.filter(o=>o.status==='pending_admin_approval').length;
-  const proof = warehouseOrders.filter(o=>o.status==='delivery_note_submitted').length;
+  const proof = warehouseOrders.filter(o=>o.status==='approved_for_delivery').length;
   const completed = warehouseOrders.filter(o=>o.status==='completed').length;
   view.innerHTML = `
     <section class="hero compact"><span class="eyebrow">${isAdmin ? 'MANAGER · CREATE & APPROVE' : 'EMPLOYEE · ASSIGNED ORDERS'}</span>
@@ -469,7 +469,7 @@ function deliveries() {
     </section>
     <section class="stats">
       <div class="stat glass"><small>Awaiting approval</small><b>${waiting}</b><span>serials to review</span></div>
-      <div class="stat glass"><small>Proof submitted</small><b>${proof}</b><span>ready for final review</span></div>
+      <div class="stat glass"><small>Approved</small><b>${proof}</b><span>waiting for delivery evidence</span></div>
       <div class="stat glass"><small>Completed</small><b>${completed}</b><span>confirmed deliveries</span></div>
       <div class="stat glass"><small>All orders</small><b>${warehouseOrders.length}</b><span>manager-created</span></div>
     </section>
@@ -489,16 +489,16 @@ function warehouseOrderCard(o) {
   let actions='';
   if (isAdmin) {
     if (o.status==='pending_admin_approval') actions += `<button class="smallbtn" onclick="approveWarehouseOrder('${o.id}')">✓ Approve serials</button><button class="smallbtn danger" onclick="rejectWarehouseSerials('${o.id}')">Reject serials</button>`;
-    if (o.status==='delivery_note_submitted') actions += `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${o.current_batch_id}')">View photos & note</button><button class="smallbtn" onclick="completeWarehouseOrder('${o.id}')">✓ Mark Completed</button>`;
+    if (o.status==='delivery_note_submitted') actions += `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${o.current_batch_id}')">View proof</button>`;
     if (['assigned','correction_required','approved_for_delivery','pending_admin_approval','delivery_note_submitted'].includes(o.status)) actions += `<button class="smallbtn danger" onclick="cancelWarehouseOrder('${o.id}')">Cancel order</button>`;
     if (o.status==='completed') actions+=`<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${o.current_batch_id}')">View proof</button>`;
   } else if (isDelivery()) {
     if (['assigned','correction_required'].includes(o.status)) actions += `<button class="smallbtn" onclick="openDriverRequest('${o.id}')">Choose serial numbers</button>`;
-    if (o.status==='approved_for_delivery') actions += `<button class="smallbtn" onclick="openWarehouseDeliveryProof('${o.id}')">Upload delivery photos & note</button>`;
+    if (o.status==='approved_for_delivery') actions += `<button class="smallbtn" onclick="openWarehouseDeliveryProof('${o.id}')">Upload ${o.service_type==='delivery_installation'?'installation photos & document':'delivery document'}</button>`;
     if (['delivery_note_submitted','completed'].includes(o.status)) actions += `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${o.current_batch_id}')">View proof</button>`;
   }
   return `<article class="delivery-card glass"><div class="delivery-top"><div><small class="section-label">MANAGER-CREATED ORDER</small><h3>${required.reduce((a,l)=>a+1,0)} product type(s) · ${esc(o.destination)}</h3></div><span class="delivery-status ${esc(o.status)}">${esc(statusLabel(o.status))}</span></div>
-  <div class="delivery-grid">${isAdmin?`<div><small>Delivery employee</small><b>${esc(driver?.full_name||driver?.email||o.driver_id)}</b></div>`:''}<div><small>Recipient</small><b>${esc(o.recipient||'—')}</b></div><div><small>Delivery date</small><b>${esc(o.delivery_date)}</b></div><div><small>Created</small><b>${timeAgo(o.created_at)}</b></div></div>
+  <div class="delivery-grid">${isAdmin?`<div><small>Delivery employee</small><b>${esc(driver?.full_name||driver?.email||o.driver_id)}</b></div>`:''}<div><small>Service</small><b>${o.service_type==='delivery_installation'?'Delivery + installation':'Delivery only'}</b></div><div><small>Recipient</small><b>${esc(o.recipient||'—')}</b></div><div><small>Delivery date</small><b>${esc(o.delivery_date)}</b></div><div><small>Created</small><b>${timeAgo(o.created_at)}</b></div></div>
   <div class="delivery-copy"><b>Items requested by manager</b><div class="delivery-serial-list">${required.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div></div>
   ${serialLabels.length ? `<div class="delivery-copy"><b>Employee-selected serial numbers</b><div class="delivery-serial-list">${serialLabels.map(x=>`<span class="pill">${esc(x)}</span>`).join('')}</div></div>`:''}
   ${o.notes ? `<p class="delivery-copy"><b>Instructions:</b> ${esc(o.notes)}</p>`:''}
@@ -520,7 +520,7 @@ function deliveryBatchCard(rows) {
       actions = `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${batchId}')">View ${hasPhotoProof ? 'photos & note' : 'note'}</button><button class="smallbtn" onclick="completeDeliveryBatch('${batchId}')">✓ Confirm completed</button><button class="smallbtn danger" onclick="cancelDeliveryBatch('${batchId}')">Reject</button>`;
     } else if (r.delivery_note_url) actions = `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${batchId}')">View evidence</button>`;
   } else if (isDelivery() && (r.status === 'pending_admin_approval' || r.status === 'approved_for_delivery')) {
-    actions = `<button class="smallbtn" onclick="${r.status === 'pending_admin_approval' ? 'openDriverDeliveryProof' : 'openBatchDeliveryNote'}('${batchId}')">Upload ${r.status === 'pending_admin_approval' ? 'photos & delivery note' : 'delivery note'}</button>`;
+    actions = `<span class="pill">Previous system · ask your manager for a new order</span>`;
   } else if (isDelivery() && r.delivery_note_url) {
     actions = `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${batchId}')">View evidence</button>`;
   }
@@ -706,6 +706,13 @@ async function deleteSerial(id) {
   render();
 }
 
+function availableStockByProduct(productId) {
+  const assignedSerials = new Set(deliveryRequests.filter(r =>
+    ['pending_admin_approval','approved_for_delivery','delivery_note_submitted'].includes(r.status)
+  ).map(r => r.unit_id));
+  return serials.filter(s => s.product_id === productId && s.status === 'available' && !assignedSerials.has(s.id)).length;
+}
+
 function availableDriverUnits() {
   const active = new Set(deliveryRequests.filter(r =>
     ['pending_admin_approval','approved_for_delivery','delivery_note_submitted'].includes(r.status)
@@ -731,8 +738,15 @@ function addManagerOrderLine() {
   if ($('moItems').children.length>=25) return toast('Maximum 25 product types.', 'error');
   const el=document.createElement('div');
   el.className='twocol warehouse-line';
-  const opts=products.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} · ${Number(p.quantity||0)} stock</option>`).join('');
-  el.innerHTML=`<label>Product<select class="mo-product" required>${opts}</select></label><label>Quantity<input class="mo-qty" type="number" required min="1" max="50" value="1"></label><button type="button" class="smallbtn danger" onclick="this.parentElement.remove()">Remove</button>`;
+  const opts=products.map(p=>`<option value="${esc(p.id)}">${esc(p.name)} · ${availableStockByProduct(p.id)} available</option>`).join('');
+  el.innerHTML=`<label>Product<select class="mo-product" required>${opts}</select><small class="mo-stock-note field-note">Available: 0</small></label><label>Quantity<input class="mo-qty" type="number" required min="1" max="50" value="1"></label><button type="button" class="smallbtn danger" onclick="this.parentElement.remove()">Remove</button>`;
+  const updateStock=()=>{
+    const n=availableStockByProduct(el.querySelector('.mo-product').value);
+    el.querySelector('.mo-stock-note').textContent=`Available: ${n}`;
+    el.querySelector('.mo-qty').max=String(Math.min(n,50));
+  };
+  el.querySelector('.mo-product').addEventListener('change',updateStock);
+  updateStock();
   $('moItems').appendChild(el);
 }
 
@@ -743,25 +757,21 @@ async function submitManagerOrder(e) {
   const items=[...document.querySelectorAll('#moItems .warehouse-line')].map(x=>({product_id:x.querySelector('.mo-product').value,quantity:Number(x.querySelector('.mo-qty').value)}));
   if (!items.length) return msg.textContent='Choose at least one product.';
   if (new Set(items.map(i=>i.product_id)).size !== items.length) return msg.textContent='Choose each product only once; adjust its quantity instead.';
+  const beyond = items.find(i => !Number.isInteger(i.quantity) || i.quantity<1 || i.quantity>availableStockByProduct(i.product_id));
+  if (beyond) return msg.textContent=`The requested quantity exceeds available stock (${availableStockByProduct(beyond.product_id)}).`;
   const btn=$('submitManagerOrderBtn');busy(btn,true,'Creating order…');msg.textContent='';
   try {
-    const {error}=await sb.rpc('manager_create_warehouse_order',{
+    const {error}=await sb.rpc('manager_create_warehouse_order_v2',{
       p_driver_id:$('moDriver').value,p_lines:items,
       p_destination:$('moDestination').value.trim(),p_recipient:$('moRecipient').value.trim(),
-      p_delivery_date:$('moDate').value,p_notes:$('moNotes').value.trim()
+      p_delivery_date:$('moDate').value,p_service_type:$('moServiceType').value,
+      p_notes:$('moNotes').value.trim()
     });
     if (error) throw error;
     managerOrderDialog.close();toast('Order assigned. The employee can now select serial numbers.');
     await loadAll();go('deliveries');
   } catch(err){msg.textContent=err.message||'Could not create the order.';}
   finally{busy(btn,false);}
-}
-
-function availableDriverUnits() {
-  const active = new Set(deliveryRequests.filter(r=>
-    ['pending_admin_approval','approved_for_delivery','delivery_note_submitted'].includes(r.status)
-  ).map(r=>r.unit_id));
-  return serials.filter(s=>s.status==='available' && !active.has(s.id));
 }
 
 function orderRequirements() {
@@ -836,11 +846,6 @@ async function rejectWarehouseSerials(id) {
   const {error}=await sb.rpc('manager_reject_warehouse_order_serials',{p_order_id:id,p_reason:reason.trim()});
   if(error) return toast(error.message,'error');toast('Serial selection rejected. Employee can select again.');await loadAll();render();
 }
-async function completeWarehouseOrder(id) {
-  if(!isAdmin||!confirm('Confirm all delivery photos and signed delivery note have been reviewed?')) return;
-  const {error}=await sb.rpc('manager_complete_warehouse_order',{p_order_id:id});
-  if(error) return toast(error.message,'error');toast('Delivery marked Completed.');await loadAll();render();
-}
 async function cancelWarehouseOrder(id) {
   if(!isAdmin) return;const reason=prompt('Reason to cancel this order?');if(reason===null) return;
   const {error}=await sb.rpc('manager_cancel_warehouse_order',{p_order_id:id,p_reason:reason.trim()});
@@ -850,7 +855,9 @@ function openWarehouseDeliveryProof(id) {
   const o=warehouseOrders.find(x=>x.id===id);
   if(!isDelivery()||!o||o.status!=='approved_for_delivery'||!o.current_batch_id) return;
   $('deliveryNoteForm').reset();$('dnRequestId').value=`order:${id}`;$('deliveryNoteMsg').textContent='';
-  $('dnPhotos').required=true;
+  const installation=o.service_type==='delivery_installation';
+  $('dnPhotosLabel').classList.toggle('hidden',!installation);
+  $('dnPhotos').required=installation;
   const rows=deliveryRequests.filter(r=>r.batch_id===o.current_batch_id);
   $('deliveryNotePreview').innerHTML=`<b>${rows.length} item(s)</b><span>${rows.map(r=>esc(`${r.products?.name||'Product'} · ${r.inventory_units?.serial_number||'—'}`)).join(', ')} · ${esc(o.destination)}</span>`;
   deliveryNoteDialog.showModal();
@@ -902,7 +909,7 @@ async function viewBatchDeliveryEvidence(batchId) {
   const urls = signed.map(x => x.data.signedUrl);
   const photos = (r.delivery_photo_paths || []).map((_,i) => `<a href="${esc(urls[i+1])}" target="_blank" rel="noopener noreferrer"><img src="${esc(urls[i+1])}" alt="Delivery photo ${i+1}"></a>`).join('');
   $('deliveryEvidenceContent').innerHTML = `<p><b>Delivery note:</b> ${esc(r.delivery_note_number || 'Document attached')}</p><a class="smallbtn" href="${esc(urls[0])}" target="_blank" rel="noopener noreferrer">Open delivery note (PDF / image) ↗</a>
-    <h3>Delivery photos · ${(r.delivery_photo_paths || []).length}</h3><div class="evidence-grid">${photos || '<p>No delivery photos in this legacy request.</p>'}</div>`;
+    ${(r.delivery_photo_paths || []).length ? `<h3>Installation photos · ${(r.delivery_photo_paths || []).length}</h3><div class="evidence-grid">${photos}</div>` : '<p>Delivery only · no installation photos required.</p>'}`;
 }
 
 function openBatchDeliveryNote(batchId) {
@@ -979,59 +986,46 @@ async function uploadDeliveryPhoto(file, batchId) {
 async function submitDeliveryNote(e) {
   e.preventDefault();
   if (!isDelivery()) return;
-  const btn = $('submitDeliveryNoteBtn');
-  const msg = $('deliveryNoteMsg');
-  const requestId = $('dnRequestId').value;
-  const file = $('dnFile').files[0];
-  const isWarehouseOrder = requestId.startsWith('order:');
-  const isDriverRequest = requestId.startsWith('driver:');
-  const isLegacyBatch = requestId.startsWith('batch:');
-  const id = isWarehouseOrder ? requestId.slice(6) : isDriverRequest ? requestId.slice(7) : isLegacyBatch ? requestId.slice(6) : requestId;
-  const uploadBatchId = isWarehouseOrder ? warehouseOrders.find(o=>o.id===id)?.current_batch_id : id;
-  const photoFiles = [...($('dnPhotos').files || [])];
-  if ((isDriverRequest || isWarehouseOrder) && (photoFiles.length < 1 || photoFiles.length > 6)) {
-    msg.textContent = 'Upload between 1 and 6 delivery photos.';
+  const btn=$('submitDeliveryNoteBtn');
+  const msg=$('deliveryNoteMsg');
+  const requestId=$('dnRequestId').value;
+  if (!requestId.startsWith('order:')) {
+    msg.textContent='Use the new manager-created order to upload delivery proof.';
     return;
   }
-  busy(btn, true, 'Uploading delivery evidence…');
-  msg.textContent = '';
+  const orderId=requestId.slice('order:'.length);
+  const order=warehouseOrders.find(o=>o.id===orderId);
+  if (!order || order.status!=='approved_for_delivery' || !order.current_batch_id) {
+    msg.textContent='Wait for manager approval before completing the delivery.';
+    return;
+  }
+  const note=$('dnFile').files[0];
+  const photos=[...($('dnPhotos').files||[])];
+  const installation=order.service_type==='delivery_installation';
+  if (!note) {msg.textContent='Upload the signed delivery document.';return;}
+  if (installation && (photos.length<1 || photos.length>6)) {
+    msg.textContent='Installation requires 1–6 installation photos.';
+    return;
+  }
+  if (photos.length>6) {msg.textContent='Maximum 6 photos.';return;}
+  busy(btn,true,'Uploading and completing…');
+  msg.textContent='';
   try {
-    if (!uploadBatchId) throw Error('Delivery has no approved serial selection.');
-    const notePath = await uploadDeliveryNote(file, uploadBatchId);
-    let photoPaths = [];
-    if (isDriverRequest || isWarehouseOrder) {
-      for (const photo of photoFiles) photoPaths.push(await uploadDeliveryPhoto(photo, uploadBatchId));
-    }
-    const {error} = isWarehouseOrder
-      ? await sb.rpc('driver_submit_warehouse_order_evidence', {
-        p_order_id:id,p_note_path:notePath,p_photo_paths:photoPaths,
-        p_note_number:$('dnNumber').value.trim(),p_note_text:$('dnNotes').value.trim()
-      })
-      : isDriverRequest
-      ? await sb.rpc('submit_driver_delivery_proof', {
-        p_batch_id: id, p_note_path: notePath, p_photo_paths: photoPaths,
-        p_note_number: $('dnNumber').value.trim(), p_note_text: $('dnNotes').value.trim()
-      })
-      : isLegacyBatch
-        ? await sb.rpc('submit_delivery_assignment_note', {
-          p_batch_id: id, p_note_path: notePath,
-          p_note_number: $('dnNumber').value.trim(), p_note_text: $('dnNotes').value.trim()
-        })
-        : await sb.rpc('submit_delivery_note', {
-          request_id: id, note_path: notePath,
-          note_number: $('dnNumber').value.trim(), note_text: $('dnNotes').value.trim()
-        });
+    const notePath=await uploadDeliveryNote(note,order.current_batch_id);
+    const photoPaths=[];
+    for (const photo of photos) photoPaths.push(await uploadDeliveryPhoto(photo,order.current_batch_id));
+    const {error}=await sb.rpc('driver_submit_warehouse_order_evidence',{
+      p_order_id:order.id,p_note_path:notePath,p_photo_paths:photoPaths,
+      p_note_number:$('dnNumber').value.trim(),p_note_text:$('dnNotes').value.trim()
+    });
     if (error) throw error;
     deliveryNoteDialog.close();
-    toast('Delivery proof submitted. The manager can now review and complete the request.');
-    await loadAll();
-    render();
-  } catch (err) {
+    toast('Delivery marked Completed automatically. Manager notified.');
+    await loadAll();go('deliveries');
+  } catch(err) {
     console.error(err);
-    msg.textContent = err.message || 'Could not upload delivery proof.';
-  } finally {
-    busy(btn, false);
-  }
+    msg.textContent=err.message||'Delivery proof could not be saved.';
+  } finally {busy(btn,false);}
 }
 
 async function viewDeliveryNote(id) {

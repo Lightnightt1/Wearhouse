@@ -1,25 +1,21 @@
-WEARHOUSE — MANAGER-ONLY DELIVERY CREATION (NOV 2026)
+WAREHOUSE — FINAL MANAGER-CREATED DELIVERY + INSTALLATION WORKFLOW (NOV 2026)
 
-WORKFLOW:
-1. Only a manager creates the delivery order. Select driver, products, quantities, destination, recipient, and date.
-2. Employee sees the assigned order. They type the first characters of a serial number and select EXACT matching serial numbers for each product and quantity. They cannot create an independent order.
-3. Serial selection goes to Pending manager approval. Manager reviews and chooses Approve or Reject. Rejection returns the order to the employee for correction.
-4. Only after approval can employee upload 1–6 delivery photos plus a delivery note (PDF or image).
-5. Manager reviews evidence and marks Completed. A manager can cancel an uncompleted order.
+WHO DOES WHAT:
+1. Manager alone creates an order: destination, date, customer/recipient, service type (Delivery only OR Delivery + installation), assigned delivery staff and each product with a quantity ONLY. No serial selection in the manager form. Every product dropdown shows current AVAILABLE quantity (including 0).
+2. Employee opens assigned order and searches for matching serial numbers as soon as they type a letter or number. They must choose exactly the manager-required quantity for each product.
+3. Employee submits serials, status is Pending manager approval. Manager receives an in-app notification and can Approve or Reject. On rejection, serials are released and employee can correct and resubmit.
+4. ONLY after manager approval can employee upload evidence. ALL orders require a signed delivery document (PDF or image); DELIVERY + INSTALLATION also requires 1–6 installation photos.
+5. After successful upload the order AUTOMATICALLY becomes Completed (no additional manager click). The delivered stock is deducted. Manager receives an in-app completion notification and can view the evidence.
 
-DATABASE:
-- Database changes have already been applied to the connected Supabase Trade project.
-- DO NOT rerun schema.sql, old migrations, or reset the database.
-- Existing Trade tables, inventory and previous delivery requests were not intentionally removed.
+DESIGN: Original dark teal/black WAREHOUSE design and colors preserved from your initial repository; no redesign or new theme.
 
-GITHUB PAGES:
-1. Unzip this archive. Upload/replace index.html, app.js, styles.css and config.js in the ROOT of the Wearhouse GitHub repository.
-2. Commit the files on the branch configured for GitHub Pages.
-3. Hard refresh the page (Ctrl+F5), then sign out and in again.
-4. Manager: Delivery / Installation > + New delivery order.
-5. Employee: Delivery / Installation > Choose serial numbers on an assigned order.
+SUPABASE: Database migrations already applied to Trade. Do NOT rerun schema.sql or any old migration. Trade data/inventory were not intentionally modified. Files uploaded during a failed submission might stay in Supabase Storage even if an order did not complete.
 
-IMPORTANT:
-- This ZIP does NOT publish itself to GitHub; the site must be updated manually.
-- All notices described above are in-app notifications.
-- Existing legacy delivery requests remain visible in a separate section.
+DEPLOY GITHUB PAGES:
+1. Extract this ZIP.
+2. Replace only index.html, app.js, styles.css, config.js in the ROOT of the existing Wearhouse GitHub repository.
+3. Commit to the GitHub Pages branch; hard refresh the site or reopen in private browsing.
+4. Log in as manager, open Delivery / Installation > + New delivery order.
+5. Test one small order as both manager and delivery employee.
+
+NOTES: In-app notifications (not email/push). Previous legacy delivery requests remain visible separately for reference. No new requests can be created through the old employee-initiated workflow.

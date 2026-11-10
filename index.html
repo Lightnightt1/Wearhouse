@@ -6,7 +6,7 @@
 <title>Warehouse — Inventory & Delivery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=12">
+<link rel="stylesheet" href="styles.css?v=15">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -76,8 +76,13 @@ SN-000002"></textarea><small class="field-note">For a new product, add every phy
 <dialog id="managerOrderDialog"><form id="managerOrderForm" class="modal glass">
   <button type="button" class="close" onclick="managerOrderDialog.close()">×</button>
   <span class="eyebrow">MANAGER ONLY · NEW DELIVERY ORDER</span><h2>Create delivery order.</h2>
-  <p>Only managers can create orders. Select the employee and required products. The employee must choose serial numbers for your approval.</p>
+  <p>Set the destination, date, delivery type and required quantities. The employee will pick the matching serial numbers in the warehouse for your approval.</p>
   <label>Assigned delivery employee<select id="moDriver" required></select></label>
+  <label>Service type<select id="moServiceType" required>
+    <option value="delivery">Delivery only</option>
+    <option value="delivery_installation">Delivery + installation</option>
+  </select></label>
+  <p class="field-note">Available quantity is shown next to each product (0 means no stock). Choose quantities only; the employee enters the serial numbers later.</p>
   <div class="selected-label"><strong>Products and quantities</strong><button type="button" class="smallbtn" onclick="addManagerOrderLine()">+ Add product</button></div>
   <div id="moItems"></div>
   <div class="twocol"><label>Recipient<input id="moRecipient" maxlength="120" placeholder="Customer name"></label><label>Delivery date<input id="moDate" type="date" required></label></div>
@@ -99,13 +104,13 @@ SN-000002"></textarea><small class="field-note">For a new product, add every phy
 </form></dialog>
 
 <dialog id="deliveryNoteDialog"><form id="deliveryNoteForm" class="modal glass">
-  <button type="button" class="close" onclick="deliveryNoteDialog.close()">×</button><span class="eyebrow">DELIVERY NOTE</span><h2>Confirm delivery.</h2><input id="dnRequestId" type="hidden"><div id="deliveryNotePreview" class="delivery-item-preview"></div>
+  <button type="button" class="close" onclick="deliveryNoteDialog.close()">×</button><span class="eyebrow">DELIVERY EVIDENCE</span><h2>Complete delivery.</h2><input id="dnRequestId" type="hidden"><div id="deliveryNotePreview" class="delivery-item-preview"></div>
   <label>Delivery note number<input id="dnNumber" maxlength="120" placeholder="DN-000001"></label>
-  <label>Delivery photos (1–6 images)<input id="dnPhotos" type="file" multiple accept="image/png,image/jpeg,image/webp" required><small class="field-note">Photos of the delivered items · max 6 MB per photo</small></label>
+  <label id="dnPhotosLabel">Installation photos (1–6 images)<input id="dnPhotos" type="file" multiple accept="image/png,image/jpeg,image/webp"><small class="field-note">Required for delivery + installation only · max 6 MB per photo</small></label>
   <label>Delivery note / signed document<input id="dnFile" type="file" required accept="application/pdf,image/png,image/jpeg,image/webp"><small class="field-note">PDF, PNG, JPG or WEBP · max 10 MB</small></label>
   <label>Driver notes<textarea id="dnNotes" maxlength="500" placeholder="Optional notes"></textarea></label>
-  <button class="primary" id="submitDeliveryNoteBtn">Submit delivery note</button><p id="deliveryNoteMsg" class="error"></p>
+  <button class="primary" id="submitDeliveryNoteBtn">Upload evidence · Complete order</button><p id="deliveryNoteMsg" class="error"></p>
 </form></dialog>
 
-<script src="config.js?v=12"></script><script src="app.js?v=12"></script>
+<script src="config.js?v=15"></script><script src="app.js?v=15"></script>
 </body></html>

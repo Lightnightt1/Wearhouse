@@ -1489,3 +1489,8 @@ dialog::backdrop{
 .warehouse-line .smallbtn {align-self:center;justify-self:start;margin-bottom:4px;}
 #moItems {max-height:280px;overflow:auto;margin-bottom:12px;}
 #driverAssignedItems {margin:10px 0 18px;gap:8px;display:flex;flex-wrap:wrap;}
+
+/* Service type, stock count and installation proof keep the original WAREHOUSE palette. */
+#moServiceType{width:100%}
+.mo-stock-note{display:block;margin-top:5px}
+#dnPhotosLabel.hidden{display:none!important}

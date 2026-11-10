@@ -6,7 +6,7 @@
 <title>Warehouse — Inventory & Delivery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=8">
+<link rel="stylesheet" href="styles.css?v=9">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -34,6 +34,8 @@
     <div id="view"></div>
   </main>
 </div>
+
+<dialog id="deliveryEvidenceDialog"><div class="modal glass evidence-modal"><button type="button" class="close" onclick="deliveryEvidenceDialog.close()">×</button><span class="eyebrow">DELIVERY EVIDENCE</span><h2>Delivery proof.</h2><div id="deliveryEvidenceContent">Loading evidence…</div></div></dialog>
 
 <dialog id="loginDialog"><form id="loginForm" class="modal glass">
   <button type="button" class="close" onclick="loginDialog.close()">×</button><span class="eyebrow">WAREHOUSE STAFF</span><h2>Welcome back.</h2><p>Sign in with an administrator or delivery account.</p>
@@ -71,27 +73,28 @@ SN-000002"></textarea><small class="field-note">For a new product, add every phy
   <button class="primary" id="saveSerialBtn">Save serial</button><p id="serialMsg" class="error"></p>
 </form></dialog>
 
-<dialog id="deliveryAssignmentDialog"><form id="deliveryAssignmentForm" class="modal glass">
-  <button type="button" class="close" onclick="deliveryAssignmentDialog.close()">×</button>
-  <span class="eyebrow">ADMIN · DELIVERY ASSIGNMENT</span><h2>New delivery request.</h2>
-  <p>Assign a product and quantity to a delivery employee. Available serials are automatically reserved.</p>
-  <label>Delivery employee<select id="daDriver" required></select></label>
-  <label>Product<select id="daProduct" required></select></label>
-  <div class="twocol"><label>Quantity<input id="daQuantity" type="number" required min="1" step="1" value="1"></label><label>Delivery date<input id="daDate" type="date" required></label></div>
-  <div id="daSerialPreview" class="delivery-item-preview"></div>
-  <label>Destination / delivery address<input id="daDestination" maxlength="200" required placeholder="Customer site / address"></label>
-  <label>Recipient<input id="daRecipient" maxlength="120" placeholder="Recipient name"></label>
-  <label>Notes<textarea id="daNotes" maxlength="500" placeholder="Optional instructions for the employee"></textarea></label>
-  <button class="primary" id="submitDeliveryAssignmentBtn">Assign delivery</button><p id="deliveryAssignmentMsg" class="error"></p>
+<dialog id="driverRequestDialog"><form id="driverRequestForm" class="modal glass">
+  <button type="button" class="close" onclick="driverRequestDialog.close()">×</button>
+  <span class="eyebrow">DELIVERY EMPLOYEE · NEW REQUEST</span><h2>Select your delivery items.</h2>
+  <p>Search each item's serial number. Matches appear as soon as you start typing. Select every item you are taking to the customer.</p>
+  <label>Find a serial number<input id="drSerialSearch" type="text" autocomplete="off" placeholder="Start typing serial or product…" aria-controls="drSerialOptions" aria-autocomplete="list"></label>
+  <div id="drSerialOptions" class="serial-autocomplete" role="listbox" aria-label="Matching serial numbers"></div>
+  <div class="selected-label"><strong>Selected items</strong><span id="drSelectedCount">0 selected</span></div>
+  <div id="drSelectedList" class="selected-serials"></div>
+  <div class="twocol"><label>Recipient<input id="drRecipient" maxlength="120" placeholder="Recipient name"></label><label>Delivery date<input id="drDate" type="date" required></label></div>
+  <label>Destination / delivery address<input id="drDestination" maxlength="200" required placeholder="Customer site / address"></label>
+  <label>Delivery notes<textarea id="drNotes" maxlength="500" placeholder="Optional instructions"></textarea></label>
+  <button class="primary" id="submitDriverRequestBtn">Confirm items · Send pending request</button><p id="driverRequestMsg" class="error" role="alert"></p>
 </form></dialog>
 
 <dialog id="deliveryNoteDialog"><form id="deliveryNoteForm" class="modal glass">
   <button type="button" class="close" onclick="deliveryNoteDialog.close()">×</button><span class="eyebrow">DELIVERY NOTE</span><h2>Confirm delivery.</h2><input id="dnRequestId" type="hidden"><div id="deliveryNotePreview" class="delivery-item-preview"></div>
   <label>Delivery note number<input id="dnNumber" maxlength="120" placeholder="DN-000001"></label>
-  <label>Delivery note file<input id="dnFile" type="file" required accept="application/pdf,image/png,image/jpeg,image/webp"><small class="field-note">PDF, PNG, JPG or WEBP · max 10 MB</small></label>
+  <label>Delivery photos (1–6 images)<input id="dnPhotos" type="file" multiple accept="image/png,image/jpeg,image/webp" required><small class="field-note">Photos of the delivered items · max 6 MB per photo</small></label>
+  <label>Delivery note / signed document<input id="dnFile" type="file" required accept="application/pdf,image/png,image/jpeg,image/webp"><small class="field-note">PDF, PNG, JPG or WEBP · max 10 MB</small></label>
   <label>Driver notes<textarea id="dnNotes" maxlength="500" placeholder="Optional notes"></textarea></label>
   <button class="primary" id="submitDeliveryNoteBtn">Submit delivery note</button><p id="deliveryNoteMsg" class="error"></p>
 </form></dialog>
 
-<script src="config.js?v=8"></script><script src="app.js?v=8"></script>
+<script src="config.js?v=9"></script><script src="app.js?v=9"></script>
 </body></html>

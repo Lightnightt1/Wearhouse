@@ -22,7 +22,6 @@ let isAdmin = false;
 let currentPage = 'dashboard';
 let realtimeChannel = null;
 let realtimeTimer = null;
-let selectedDeliveryUnit = null;
 
 const $ = id => document.getElementById(id);
 const view = $('view');
@@ -431,17 +430,46 @@ function serialRows(arr) {
   return arr.map(s => `<div class="item admin-row"><div class="serial-icon">№</div><div class="itemmain"><b>${esc(s.serial_number)}</b><span>${esc(s.products?.name || 'Unknown product')} · ${esc(statusLabel(s.status))}</span></div>${s.status === 'available' ? `<button class="smallbtn danger" onclick="deleteSerial('${s.id}')">Delete</button>` : `<span class="pill">${esc(statusLabel(s.status))}</span>`}</div>`).join('') || empty('No serials found', 'Add or change your filter.');
 }
 
+function deliveryGroups() {
+  const groups = new Map();
+  for (const request of deliveryRequests) {
+    const key = request.batch_id || request.id;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(request);
+  }
+  return [...groups.values()];
+}
+
 function deliveries() {
   if (!isStaff()) return admin();
-  const pending = deliveryRequests.filter(r => r.status === 'pending_admin_approval').length;
-  const approved = deliveryRequests.filter(r => r.status === 'approved_for_delivery').length;
-  const noteReady = deliveryRequests.filter(r => r.status === 'delivery_note_submitted').length;
-  const completed = deliveryRequests.filter(r => r.status === 'completed').length;
+  const groups = deliveryGroups();
+  const pending = groups.filter(g => g[0].status === 'pending_admin_approval').length;
+  const approved = groups.filter(g => g[0].status === 'approved_for_delivery').length;
+  const noteReady = groups.filter(g => g[0].status === 'delivery_note_submitted').length;
+  const completed = groups.filter(g => g[0].status === 'completed').length;
 
   view.innerHTML = `
-    <section class="hero compact"><span class="eyebrow">${isAdmin ? 'ADMIN · DELIVERY CONTROL' : 'DELIVERY WORKSPACE'}</span><h1>${isAdmin ? 'Delivery' : 'My delivery'}<br><em>workflow.</em></h1><p>${isAdmin ? 'Approve requests, review delivery notes and complete handovers.' : 'Enter or scan the serial number from the warehouse. The product is identified automatically. After delivery, submit the delivery note.'}</p>${isDelivery() ? `<div class="hero-actions"><button class="primary" onclick="openDeliveryRequest()">＋ Enter / scan serial</button></div>` : ''}</section>
-    <section class="stats"><div class="stat glass"><small>Pending</small><b>${pending}</b><span>waiting approval</span></div><div class="stat glass"><small>Approved</small><b>${approved}</b><span>ready / moving</span></div><div class="stat glass"><small>Notes ready</small><b>${noteReady}</b><span>waiting review</span></div><div class="stat glass"><small>Completed</small><b>${completed}</b><span>finished</span></div></section>
-    <section class="panel glass delivery-list"><div class="head"><div><small class="section-label">${isAdmin ? 'ALL REQUESTS' : 'YOUR REQUESTS'}</small><h2>Deliveries</h2></div><span class="pill">${deliveryRequests.length}</span></div>${deliveryRequests.map(deliveryCard).join('') || empty('No delivery requests', isDelivery() ? 'Create your first request above.' : 'New requests will appear here.')}</section>`;
+    <section class="hero compact"><span class="eyebrow">${isAdmin ? 'ADMIN · DELIVERY CONTROL' : 'DELIVERY WORKSPACE'}</span><h1>${isAdmin ? 'Delivery' : 'My delivery'}<br><em>workflow.</em></h1><p>${isAdmin ? 'Create requests, assign a delivery employee and review completed handovers.' : 'Your assigned deliveries appear here. After delivery, upload the delivery note for manager approval.'}</p>${isAdmin ? `<div class="hero-actions"><button class="primary" onclick="openDeliveryAssignment()">＋ New delivery request</button></div>` : ''}</section>
+    <section class="stats"><div class="stat glass"><small>Pending</small><b>${pending}</b><span>older requests awaiting approval</span></div><div class="stat glass"><small>Assigned</small><b>${approved}</b><span>ready for driver</span></div><div class="stat glass"><small>Notes ready</small><b>${noteReady}</b><span>waiting review</span></div><div class="stat glass"><small>Completed</small><b>${completed}</b><span>finished</span></div></section>
+    <section class="panel glass delivery-list"><div class="head"><div><small class="section-label">${isAdmin ? 'ALL REQUESTS' : 'YOUR ASSIGNMENTS'}</small><h2>Deliveries</h2></div><span class="pill">${groups.length}</span></div>${groups.map(g => g[0].batch_id ? deliveryBatchCard(g) : deliveryCard(g[0])).join('') || empty('No delivery requests', isAdmin ? 'Select New delivery request to assign your first delivery.' : 'Assigned deliveries will appear here after a manager creates them.')}</section>`;
+}
+
+function deliveryBatchCard(rows) {
+  const r = rows[0];
+  const employee = profiles.find(p => p.id === r.delivery_guy_id);
+  const serialNames = rows.map(x => x.inventory_units?.serial_number || serials.find(s => s.id === x.unit_id)?.serial_number || '—');
+  const batchId = r.batch_id;
+  let actions = '';
+  if (isAdmin) {
+    if (r.status === 'approved_for_delivery') actions = `<button class="smallbtn danger" onclick="cancelDeliveryBatch('${batchId}')">Cancel request</button>`;
+    else if (r.status === 'delivery_note_submitted') actions = `<button class="smallbtn" onclick="viewBatchDeliveryNote('${batchId}')">View note</button><button class="smallbtn" onclick="completeDeliveryBatch('${batchId}')">✓ Confirm delivery & deduct stock</button><button class="smallbtn danger" onclick="cancelDeliveryBatch('${batchId}')">Cancel</button>`;
+    else if (r.delivery_note_url) actions = `<button class="smallbtn" onclick="viewBatchDeliveryNote('${batchId}')">View note</button>`;
+  } else if (isDelivery() && r.status === 'approved_for_delivery') {
+    actions = `<button class="smallbtn" onclick="openBatchDeliveryNote('${batchId}')">Upload delivery note</button>`;
+  } else if (isDelivery() && r.delivery_note_url) {
+    actions = `<button class="smallbtn" onclick="viewBatchDeliveryNote('${batchId}')">View note</button>`;
+  }
+  return `<article class="delivery-card glass"><div class="delivery-top"><div><small class="section-label">${esc(r.products?.name || 'Product')}</small><h3>${rows.length} unit${rows.length === 1 ? '' : 's'} · Delivery request</h3></div><span class="delivery-status ${esc(r.status)}">${esc(statusLabel(r.status))}</span></div><div class="delivery-grid">${isAdmin ? `<div><small>Assigned employee</small><b>${esc(employee?.full_name || employee?.email || r.delivery_guy_id)}</b></div>` : ''}<div><small>Quantity</small><b>${rows.length}</b></div><div><small>Destination</small><b>${esc(r.destination)}</b></div><div><small>Recipient</small><b>${esc(r.recipient || '—')}</b></div><div><small>Delivery date</small><b>${esc(r.delivery_date)}</b></div><div><small>Warehouse</small><b>${esc(r.products?.location || '—')}</b></div><div><small>Created</small><b>${timeAgo(r.created_at)}</b></div></div><p class="delivery-copy"><b>Serial numbers:</b> ${serialNames.map(esc).join(', ')}</p>${r.notes ? `<p class="delivery-copy"><b>Instructions:</b> ${esc(r.notes)}</p>` : ''}${r.delivery_note_number ? `<p class="delivery-copy"><b>Delivery note:</b> ${esc(r.delivery_note_number)}${r.driver_notes ? ` · ${esc(r.driver_notes)}` : ''}</p>` : ''}${r.rejection_reason ? `<p class="delivery-copy rejected-copy"><b>Cancelled:</b> ${esc(r.rejection_reason)}</p>` : ''}${actions ? `<div class="delivery-actions">${actions}</div>` : ''}</article>`;
 }
 
 function deliveryCard(r) {
@@ -449,9 +477,9 @@ function deliveryCard(r) {
   const serial = r.inventory_units?.serial_number || serials.find(s => s.id === r.unit_id)?.serial_number || '—';
   let actions = '';
   if (isAdmin) {
-    if (r.status === 'pending_admin_approval') actions = `<button class="smallbtn" onclick="approveDelivery('${r.id}')">✓ Approve</button><button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Reject</button>`;
-    else if (r.status === 'approved_for_delivery') actions = `<button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Cancel / reject</button>`;
-    else if (r.status === 'delivery_note_submitted') actions = `<button class="smallbtn" onclick="viewDeliveryNote('${r.id}')">View note</button><button class="smallbtn" onclick="completeDelivery('${r.id}')">✓ Final approve & deduct stock</button><button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Reject</button>`;
+    if (r.status === 'pending_admin_approval') actions = `<button class="smallbtn" onclick="approveDelivery('${r.id}')">✓ Approve old request</button><button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Reject</button>`;
+    else if (r.status === 'approved_for_delivery') actions = `<button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Cancel request</button>`;
+    else if (r.status === 'delivery_note_submitted') actions = `<button class="smallbtn" onclick="viewDeliveryNote('${r.id}')">View note</button><button class="smallbtn" onclick="completeDelivery('${r.id}')">✓ Confirm delivery</button><button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Reject</button>`;
     else if (r.delivery_note_url) actions = `<button class="smallbtn" onclick="viewDeliveryNote('${r.id}')">View note</button>`;
   } else if (isDelivery() && r.status === 'approved_for_delivery') {
     actions = `<button class="smallbtn" onclick="openDeliveryNote('${r.id}')">Upload delivery note</button>`;
@@ -459,7 +487,7 @@ function deliveryCard(r) {
     actions = `<button class="smallbtn" onclick="viewDeliveryNote('${r.id}')">View note</button>`;
   }
 
-  return `<article class="delivery-card glass"><div class="delivery-top"><div><small class="section-label">${esc(r.products?.name || 'Product')}</small><h3>${esc(serial)}</h3></div><span class="delivery-status ${esc(r.status)}">${esc(statusLabel(r.status))}</span></div><div class="delivery-grid">${isAdmin ? `<div><small>Delivery guy</small><b>${esc(driver?.full_name || driver?.email || r.delivery_guy_id)}</b></div>` : ''}<div><small>Destination</small><b>${esc(r.destination)}</b></div><div><small>Recipient</small><b>${esc(r.recipient || '—')}</b></div><div><small>Delivery date</small><b>${esc(r.delivery_date)}</b></div><div><small>Location</small><b>${esc(r.products?.location || '—')}</b></div><div><small>Created</small><b>${timeAgo(r.created_at)}</b></div></div>${r.notes ? `<p class="delivery-copy"><b>Request note:</b> ${esc(r.notes)}</p>` : ''}${r.delivery_note_number ? `<p class="delivery-copy"><b>Delivery note:</b> ${esc(r.delivery_note_number)}${r.driver_notes ? ` · ${esc(r.driver_notes)}` : ''}</p>` : ''}${r.rejection_reason ? `<p class="delivery-copy rejected-copy"><b>Rejected:</b> ${esc(r.rejection_reason)}</p>` : ''}${actions ? `<div class="delivery-actions">${actions}</div>` : ''}</article>`;
+  return `<article class="delivery-card glass"><div class="delivery-top"><div><small class="section-label">${esc(r.products?.name || 'Product')}</small><h3>${esc(serial)}</h3></div><span class="delivery-status ${esc(r.status)}">${esc(statusLabel(r.status))}</span></div><div class="delivery-grid">${isAdmin ? `<div><small>Delivery employee</small><b>${esc(driver?.full_name || driver?.email || r.delivery_guy_id)}</b></div>` : ''}<div><small>Destination</small><b>${esc(r.destination)}</b></div><div><small>Recipient</small><b>${esc(r.recipient || '—')}</b></div><div><small>Delivery date</small><b>${esc(r.delivery_date)}</b></div><div><small>Warehouse</small><b>${esc(r.products?.location || '—')}</b></div><div><small>Created</small><b>${timeAgo(r.created_at)}</b></div></div>${r.notes ? `<p class="delivery-copy"><b>Instructions:</b> ${esc(r.notes)}</p>` : ''}${r.delivery_note_number ? `<p class="delivery-copy"><b>Delivery note:</b> ${esc(r.delivery_note_number)}${r.driver_notes ? ` · ${esc(r.driver_notes)}` : ''}</p>` : ''}${r.rejection_reason ? `<p class="delivery-copy rejected-copy"><b>Rejected:</b> ${esc(r.rejection_reason)}</p>` : ''}${actions ? `<div class="delivery-actions">${actions}</div>` : ''}</article>`;
 }
 
 function notificationsPage() {
@@ -617,102 +645,118 @@ async function deleteSerial(id) {
   render();
 }
 
-function openDeliveryRequest() {
-  if (!isDelivery()) return;
-  const availableUnits = serials.filter(s => s.status === 'available');
-  if (!availableUnits.length) return toast('No available serial numbers in the warehouse.', 'error');
-
-  selectedDeliveryUnit = null;
-  $('deliveryRequestForm').reset();
-  $('serialSuggestions').innerHTML = availableUnits.map(s => {
-    const p = products.find(x => x.id === s.product_id);
-    return `<option value="${esc(s.serial_number)}">${esc(p?.name || 'Product')} · ${esc(p?.location || '—')}</option>`;
-  }).join('');
-  $('drSerialPreview').classList.add('hidden');
-  $('drSerialPreview').innerHTML = '';
-  $('drDate').value = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
-  $('deliveryRequestMsg').textContent = '';
-  deliveryRequestDialog.showModal();
-  setTimeout(() => $('drSerial')?.focus(), 80);
+function availableUnitsForProduct(productId) {
+  const activeUnits = new Set(deliveryRequests
+    .filter(r => ['pending_admin_approval', 'approved_for_delivery', 'delivery_note_submitted'].includes(r.status))
+    .map(r => r.unit_id));
+  return serials.filter(s => s.product_id === productId && s.status === 'available' && !activeUnits.has(s.id));
 }
 
-function lookupDeliverySerial() {
-  const input = $('drSerial');
-  const preview = $('drSerialPreview');
-  if (!input || !preview) return null;
-
-  const raw = input.value.trim();
-  selectedDeliveryUnit = null;
-
-  if (!raw) {
-    preview.classList.add('hidden');
-    preview.innerHTML = '';
-    return null;
-  }
-
-  const unit = serials.find(s => String(s.serial_number || '').toLowerCase() === raw.toLowerCase());
-  if (!unit) {
-    preview.classList.remove('hidden');
-    preview.innerHTML = `<div><b>Serial not found</b><span>Check the serial number and try again.</span></div><span>✕</span>`;
-    return null;
-  }
-
-  const product = products.find(p => p.id === unit.product_id);
-  const hasActiveRequest = deliveryRequests.some(r =>
-    r.unit_id === unit.id && ['pending_admin_approval', 'approved_for_delivery', 'delivery_note_submitted'].includes(r.status)
-  );
-
-  if (unit.status !== 'available' || hasActiveRequest) {
-    preview.classList.remove('hidden');
-    preview.innerHTML = `<div><b>${esc(product?.name || 'Product')}</b><span>${esc(unit.serial_number)} · ${hasActiveRequest ? 'Already in an active delivery request' : esc(statusLabel(unit.status))}</span></div><span>Not available</span>`;
-    return null;
-  }
-
-  selectedDeliveryUnit = unit;
-  preview.classList.remove('hidden');
-  preview.innerHTML = `<div><b>✓ ${esc(product?.name || 'Product')}</b><span>${esc(unit.serial_number)} · Warehouse location ${esc(product?.location || '—')} · ${Number(product?.quantity || 0)} pcs in inventory</span></div><span>Available</span>`;
-  return unit;
+function openDeliveryAssignment() {
+  if (!isAdmin) return;
+  const employees = profiles.filter(p => p.role === 'delivery_guy' && p.active !== false);
+  if (!employees.length) return toast('Create or enable a delivery employee in Delivery Guys first.', 'error');
+  const eligibleProducts = products.filter(p => availableUnitsForProduct(p.id).length);
+  if (!eligibleProducts.length) return toast('Add a product with available serial numbers first.', 'error');
+  $('deliveryAssignmentForm').reset();
+  $('deliveryAssignmentMsg').textContent = '';
+  $('daDriver').innerHTML = '<option value="">Select an employee...</option>' + employees.map(p => `<option value="${esc(p.id)}">${esc(p.full_name || p.email)}</option>`).join('');
+  $('daProduct').innerHTML = '<option value="">Select a product...</option>' + eligibleProducts.map(p => `<option value="${esc(p.id)}">${esc(p.name)} (${availableUnitsForProduct(p.id).length} available)</option>`).join('');
+  $('daQuantity').value = '1';
+  $('daDate').value = new Date(Date.now() - new Date().getTimezoneOffset() * 60000 + 86400000).toISOString().slice(0, 10);
+  updateAssignmentPreview();
+  deliveryAssignmentDialog.showModal();
 }
 
-async function submitDeliveryRequest(e) {
-  e.preventDefault();
-  if (!isDelivery()) return;
-  const btn = $('submitDeliveryRequestBtn');
-  const msg = $('deliveryRequestMsg');
-  const unit = lookupDeliverySerial();
-  const product = unit ? products.find(p => p.id === unit.product_id) : null;
-
-  if (!unit || !product) {
-    msg.textContent = 'Enter a valid available serial number first.';
-    $('drSerial')?.focus();
+function updateAssignmentPreview() {
+  const product = products.find(p => p.id === $('daProduct')?.value);
+  const available = product ? availableUnitsForProduct(product.id) : [];
+  const count = Number($('daQuantity')?.value || 0);
+  if ($('daQuantity')) $('daQuantity').max = String(Math.min(100, available.length || 1));
+  const preview = $('daSerialPreview');
+  if (!product) {
+    preview.innerHTML = '<span>Select a product to see available inventory.</span>';
     return;
   }
+  if (!Number.isInteger(count) || count < 1 || count > available.length || count > 100) {
+    preview.innerHTML = `<span>${available.length} available serial(s). Choose a quantity from 1 to ${Math.min(100, available.length)}.</span>`;
+    return;
+  }
+  preview.innerHTML = `<div><b>${esc(product.name)} · ${count} unit${count === 1 ? '' : 's'}</b><span>${available.length} available · Serials reserved automatically on assignment.</span></div>`;
+}
 
-  const payload = {
-    delivery_guy_id: user.id,
-    product_id: product.id,
-    unit_id: unit.id,
-    destination: $('drDestination').value.trim(),
-    recipient: $('drRecipient').value.trim(),
-    delivery_date: $('drDate').value,
-    notes: $('drNotes').value.trim()
-  };
-  if (!payload.destination || !payload.delivery_date) return;
-  busy(btn, true, 'Submitting…');
+async function submitDeliveryAssignment(e) {
+  e.preventDefault();
+  if (!isAdmin) return;
+  const msg = $('deliveryAssignmentMsg');
+  const btn = $('submitDeliveryAssignmentBtn');
+  const productId = $('daProduct').value;
+  const count = Number($('daQuantity').value);
+  const available = availableUnitsForProduct(productId);
+  if (!profiles.some(p => p.id === $('daDriver').value && p.active !== false)) return msg.textContent = 'Choose an active delivery employee.';
+  if (!Number.isInteger(count) || count < 1 || count > Math.min(100, available.length)) return msg.textContent = 'Quantity exceeds available inventory.';
+  busy(btn, true, 'Assigning…');
   msg.textContent = '';
   try {
-    const { error } = await sb.from('delivery_requests').insert(payload);
+    const { error } = await sb.rpc('create_delivery_assignment', {
+      p_driver_id: $('daDriver').value,
+      p_product_id: productId,
+      p_quantity: count,
+      p_destination: $('daDestination').value.trim(),
+      p_recipient: $('daRecipient').value.trim(),
+      p_delivery_date: $('daDate').value,
+      p_notes: $('daNotes').value.trim()
+    });
     if (error) throw error;
-    deliveryRequestDialog.close();
-    selectedDeliveryUnit = null;
-    toast('Serial found and delivery request sent for admin approval.');
+    deliveryAssignmentDialog.close();
+    toast(`Assigned ${count} unit${count === 1 ? '' : 's'} to the delivery employee.`);
     await loadAll();
     go('deliveries');
   } catch (err) {
-    msg.textContent = err.code === '23505' ? 'This serial already has an active delivery request.' : (err.message || 'Could not submit request.');
+    msg.textContent = err.message || 'Could not create the delivery request.';
   } finally {
     busy(btn, false);
   }
+}
+
+async function cancelDeliveryBatch(batchId) {
+  if (!isAdmin) return;
+  const reason = prompt('Reason for cancellation (optional):');
+  if (reason === null) return;
+  const { error } = await sb.rpc('cancel_delivery_assignment', { p_batch_id: batchId, p_reason: reason.trim() });
+  if (error) return toast(error.message, 'error');
+  toast('Delivery cancelled and stock released.');
+  await loadAll();
+  render();
+}
+
+async function completeDeliveryBatch(batchId) {
+  if (!isAdmin || !confirm('Confirm this entire delivery and deduct all assigned units from stock?')) return;
+  const { error } = await sb.rpc('complete_delivery_assignment', { p_batch_id: batchId });
+  if (error) return toast(error.message, 'error');
+  toast('Delivery completed and stock updated.');
+  await loadAll();
+  render();
+}
+
+function openBatchDeliveryNote(batchId) {
+  if (!isDelivery()) return;
+  const rows = deliveryRequests.filter(r => r.batch_id === batchId);
+  if (!rows.length || rows.some(r => r.status !== 'approved_for_delivery')) return;
+  $('deliveryNoteForm').reset();
+  $('dnRequestId').value = `batch:${batchId}`;
+  $('deliveryNoteMsg').textContent = '';
+  const names = rows.map(r => r.inventory_units?.serial_number || '—').map(esc).join(', ');
+  $('deliveryNotePreview').innerHTML = `<b>${esc(rows[0].products?.name || 'Product')} · ${rows.length} units</b><span>${names} · ${esc(rows[0].destination)}</span>`;
+  deliveryNoteDialog.showModal();
+}
+
+async function viewBatchDeliveryNote(batchId) {
+  const r = deliveryRequests.find(x => x.batch_id === batchId && x.delivery_note_url);
+  if (!r) return toast('No delivery note file.', 'error');
+  const { data, error } = await sb.storage.from('delivery-notes').createSignedUrl(r.delivery_note_url, 300);
+  if (error) return toast(error.message, 'error');
+  window.open(data.signedUrl, '_blank', 'noopener');
 }
 
 async function approveDelivery(id) {
@@ -768,13 +812,18 @@ async function submitDeliveryNote(e) {
   busy(btn, true, 'Uploading…');
   msg.textContent = '';
   try {
-    const path = await uploadDeliveryNote(file, requestId);
-    const { error } = await sb.rpc('submit_delivery_note', {
-      request_id: requestId,
-      note_path: path,
-      note_number: $('dnNumber').value.trim(),
-      note_text: $('dnNotes').value.trim()
-    });
+    const isBatch = requestId.startsWith('batch:');
+    const id = isBatch ? requestId.slice(6) : requestId;
+    const path = await uploadDeliveryNote(file, id);
+    const { error } = isBatch
+      ? await sb.rpc('submit_delivery_assignment_note', {
+          p_batch_id: id, p_note_path: path,
+          p_note_number: $('dnNumber').value.trim(), p_note_text: $('dnNotes').value.trim()
+        })
+      : await sb.rpc('submit_delivery_note', {
+          request_id: id, note_path: path,
+          note_number: $('dnNumber').value.trim(), note_text: $('dnNotes').value.trim()
+        });
     if (error) throw error;
     deliveryNoteDialog.close();
     toast('Delivery note submitted.');
@@ -918,9 +967,9 @@ $('searchBtn')?.addEventListener('click', () => { go('inventory'); setTimeout(()
 $('pImageFile')?.addEventListener('change', e => { if (e.target.files[0]) preview(URL.createObjectURL(e.target.files[0])); });
 $('deliveryUserForm')?.addEventListener('submit', createDeliveryUser);
 $('serialForm')?.addEventListener('submit', saveSerial);
-$('deliveryRequestForm')?.addEventListener('submit', submitDeliveryRequest);
-$('drSerial')?.addEventListener('input', lookupDeliverySerial);
-$('drSerial')?.addEventListener('change', lookupDeliverySerial);
+$('deliveryAssignmentForm')?.addEventListener('submit', submitDeliveryAssignment);
+$('daProduct')?.addEventListener('change', updateAssignmentPreview);
+$('daQuantity')?.addEventListener('input', updateAssignmentPreview);
 $('deliveryNoteForm')?.addEventListener('submit', submitDeliveryNote);
 
 $('pSerials')?.addEventListener('input', syncProductQuantityFromSerials);

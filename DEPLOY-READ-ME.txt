@@ -1,0 +1,37 @@
+WEARHOUSE — MANAGER-CREATED DELIVERY REQUESTS
+Updated 10 November 2026
+
+WHAT CHANGED
+- The manager opens Delivery / Installation and clicks + New delivery request.
+- Select the active delivery employee, product, quantity, destination, date, and recipient.
+- Available serial numbers are automatically selected and reserved in one database transaction.
+- The employee sees the assigned request in their Deliveries page and uploads one delivery note for all units in it.
+- A manager reviews the note and confirms completion; stock is then deducted.
+- Managers can cancel an assigned delivery and release reserved stock.
+- Older delivery requests (if any) can still be processed.
+
+DATABASE
+The SQL migration has ALREADY BEEN APPLIED to the existing Supabase Trade project.
+DO NOT run older schema.sql or reinstall Supabase.
+Your Trade tables and pre-existing inventory have not been reset.
+ADMIN-DELIVERY-MIGRATION.sql is provided for your records ONLY.
+
+DEPLOY TO GITHUB PAGES
+1. Open your existing Wearhouse GitHub repository.
+2. Replace ONLY these four files in the website root:
+   index.html, app.js, styles.css, config.js
+3. Commit the changes to your GitHub Pages deployment branch.
+4. Open the site and refresh (Ctrl+F5) to bypass old cached JS.
+5. As manager, open Delivery / Installation > + New delivery request.
+
+BEFORE CREATING THE FIRST REQUEST
+- At least one active delivery employee must exist in Delivery Guys.
+- At least one product must have available, unique serial numbers.
+- Quantities are limited by available serial numbers (max 100 per request).
+- Each assigned delivery groups all of its units into one card and uses one delivery note.
+
+SECURITY
+- Delivery employees cannot create new requests; server policies enforce that.
+- The manager-only RPCs verify the signed-in account and operate transactionally.
+- The employee can upload notes only to their own assignment folder.
+- Existing account credentials are not included in these files.

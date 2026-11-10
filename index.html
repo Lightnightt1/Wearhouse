@@ -6,7 +6,7 @@
 <title>Warehouse — Inventory & Delivery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=7">
+<link rel="stylesheet" href="styles.css?v=8">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -71,15 +71,18 @@ SN-000002"></textarea><small class="field-note">For a new product, add every phy
   <button class="primary" id="saveSerialBtn">Save serial</button><p id="serialMsg" class="error"></p>
 </form></dialog>
 
-<dialog id="deliveryRequestDialog"><form id="deliveryRequestForm" class="modal glass">
-  <button type="button" class="close" onclick="deliveryRequestDialog.close()">×</button><span class="eyebrow">WAREHOUSE SERIAL</span><h2>Enter the serial number.</h2><p>Type or scan the serial on the physical item. The product will be found automatically.</p>
-  <label>Serial number<input id="drSerial" required maxlength="120" list="serialSuggestions" autocomplete="off" placeholder="Scan or enter serial…"></label>
-  <datalist id="serialSuggestions"></datalist>
-  <div id="drSerialPreview" class="delivery-item-preview hidden"></div>
-  <label>Destination<input id="drDestination" required maxlength="200" placeholder="Customer / site / address"></label>
-  <div class="twocol"><label>Recipient<input id="drRecipient" maxlength="120" placeholder="Recipient name"></label><label>Delivery date<input id="drDate" type="date" required></label></div>
-  <label>Notes<textarea id="drNotes" maxlength="500" placeholder="Optional notes"></textarea></label>
-  <button class="primary" id="submitDeliveryRequestBtn">Send for first admin approval</button><p id="deliveryRequestMsg" class="error"></p>
+<dialog id="deliveryAssignmentDialog"><form id="deliveryAssignmentForm" class="modal glass">
+  <button type="button" class="close" onclick="deliveryAssignmentDialog.close()">×</button>
+  <span class="eyebrow">ADMIN · DELIVERY ASSIGNMENT</span><h2>New delivery request.</h2>
+  <p>Assign a product and quantity to a delivery employee. Available serials are automatically reserved.</p>
+  <label>Delivery employee<select id="daDriver" required></select></label>
+  <label>Product<select id="daProduct" required></select></label>
+  <div class="twocol"><label>Quantity<input id="daQuantity" type="number" required min="1" step="1" value="1"></label><label>Delivery date<input id="daDate" type="date" required></label></div>
+  <div id="daSerialPreview" class="delivery-item-preview"></div>
+  <label>Destination / delivery address<input id="daDestination" maxlength="200" required placeholder="Customer site / address"></label>
+  <label>Recipient<input id="daRecipient" maxlength="120" placeholder="Recipient name"></label>
+  <label>Notes<textarea id="daNotes" maxlength="500" placeholder="Optional instructions for the employee"></textarea></label>
+  <button class="primary" id="submitDeliveryAssignmentBtn">Assign delivery</button><p id="deliveryAssignmentMsg" class="error"></p>
 </form></dialog>
 
 <dialog id="deliveryNoteDialog"><form id="deliveryNoteForm" class="modal glass">
@@ -90,5 +93,5 @@ SN-000002"></textarea><small class="field-note">For a new product, add every phy
   <button class="primary" id="submitDeliveryNoteBtn">Submit delivery note</button><p id="deliveryNoteMsg" class="error"></p>
 </form></dialog>
 
-<script src="config.js?v=7"></script><script src="app.js?v=7"></script>
+<script src="config.js?v=8"></script><script src="app.js?v=8"></script>
 </body></html>

@@ -1,21 +1,33 @@
-WAREHOUSE — FINAL MANAGER-CREATED DELIVERY + INSTALLATION WORKFLOW (NOV 2026)
+WEARHOUSE — GLASSMORPHISM WEBSITE UPDATE
+=======================================
 
-WHO DOES WHAT:
-1. Manager alone creates an order: destination, date, customer/recipient, service type (Delivery only OR Delivery + installation), assigned delivery staff and each product with a quantity ONLY. No serial selection in the manager form. Every product dropdown shows current AVAILABLE quantity (including 0).
-2. Employee opens assigned order and searches for matching serial numbers as soon as they type a letter or number. They must choose exactly the manager-required quantity for each product.
-3. Employee submits serials, status is Pending manager approval. Manager receives an in-app notification and can Approve or Reject. On rejection, serials are released and employee can correct and resubmit.
-4. ONLY after manager approval can employee upload evidence. ALL orders require a signed delivery document (PDF or image); DELIVERY + INSTALLATION also requires 1–6 installation photos.
-5. After successful upload the order AUTOMATICALLY becomes Completed (no additional manager click). The delivered stock is deducted. Manager receives an in-app completion notification and can view the evidence.
+This is the actual Wearhouse website, not a static mockup.
+It uses the existing Supabase Trade project and retains the existing
+manager-created delivery orders, serial selection, approval/rejection,
+proof upload, and automatic completion workflow.
 
-DESIGN: Original dark teal/black WAREHOUSE design and colors preserved from your initial repository; no redesign or new theme.
+NEW VISUALS
+- Bell logo and matching favicon
+- Glass-style sidebar, buttons, cards, modals, tables, notifications
+- Teal frosted-glass dashboard following the approved screenshot design
+- Responsive layout on desktop, tablet and mobile
+- Dashboard metrics from actual warehouse data, not mockup statistics
+- Activity chart from the latest recorded inventory changes
 
-SUPABASE: Database migrations already applied to Trade. Do NOT rerun schema.sql or any old migration. Trade data/inventory were not intentionally modified. Files uploaded during a failed submission might stay in Supabase Storage even if an order did not complete.
+HOW TO PUBLISH ON GITHUB PAGES
+1) Open the GitHub repository for the Wearhouse site.
+2) Upload/replace these FIVE files in the web root:
+   index.html
+   app.js
+   styles.css
+   config.js
+   favicon.svg
+3) Commit the changes to the branch used by GitHub Pages.
+4) Refresh the live website (Ctrl+F5 if your browser caches the old theme).
 
-DEPLOY GITHUB PAGES:
-1. Extract this ZIP.
-2. Replace only index.html, app.js, styles.css, config.js in the ROOT of the existing Wearhouse GitHub repository.
-3. Commit to the GitHub Pages branch; hard refresh the site or reopen in private browsing.
-4. Log in as manager, open Delivery / Installation > + New delivery order.
-5. Test one small order as both manager and delivery employee.
+Do not upload desktop-preview.png or mobile-preview.png — those use sample
+browser-only data for visual QA and are not part of the live website.
+No Supabase SQL migration is needed for this visual change.
 
-NOTES: In-app notifications (not email/push). Previous legacy delivery requests remain visible separately for reference. No new requests can be created through the old employee-initiated workflow.
+ملاحظة: هذا هو الموقع الفعلي، وليس مجرد تصميم صورة. ارفع الملفات الخمسة
+إلى مستودع Wearhouse واستبدل الملفات الحالية ثم اضغط Commit changes.

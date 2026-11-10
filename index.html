@@ -2,33 +2,74 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#07131a"><meta name="description" content="Warehouse inventory and delivery control system.">
-<title>Warehouse — Inventory & Delivery</title>
+<meta name="theme-color" content="#06383d"><meta name="description" content="Warehouse inventory and delivery control system.">
+<title>Wearhouse — Inventory & Delivery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=15">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=16">
+<link rel="stylesheet" href="styles.css?v=16">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+<svg class="icon-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 8-3 10h18c0-2-3-3-3-10Z"/><path d="M10 21h4"/><path d="M10 2a2 2 0 0 1 4 0"/></symbol>
+  <symbol id="i-dashboard" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7Z"/><path d="m3 7 9 5 9-5M12 12v10"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5 9-5Zm-9 9 9 5 9-5M3 16l9 5 9-5"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h12v11H3zM15 10h4l3 4v3h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 21 6v6c0 5-4 8-9 10-5-2-9-5-9-10V6l9-4Z"/><path d="m8 12 3 3 5-6"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M2 20v-2c0-3 3-5 7-5s7 2 7 5v2H2ZM16 6a3 3 0 0 1 0 6M18 14c2 1 4 2 4 5v1h-4"/></symbol>
+  <symbol id="i-barcode" viewBox="0 0 24 24"><path d="M3 5v14M7 5v14M10 5v14M14 5v14M18 5v14M21 5v14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+  <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M6 18 18 6M9 6h9v9"/></symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M3 17V9m4 8V4m4 13v-7m4 7V6m4 11V3M2 21h20"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20L12 3Z"/><path d="M12 9v5m0 3v1"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v11H3V10ZM8 21v-8h8v8"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+  <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4M15 16l4-4-4-4m4 4H9"/></symbol>
+  <symbol id="i-location" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2"/></symbol>
+  <symbol id="i-boxes" viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></symbol>
+</svg>
 <div class="bg"><div class="orb orb-a"></div><div class="orb orb-b"></div><div class="grid"></div></div>
 <div id="app" class="app">
-  <aside class="sidebar glass">
-    <button class="brand" data-page="dashboard" aria-label="Warehouse home"><span class="brand-mark">W</span><span>WARE<br><em>HOUSE</em></span></button>
+  <aside class="sidebar glass" aria-label="Wearhouse navigation">
+    <button class="brand" data-page="dashboard" aria-label="Wearhouse dashboard">
+      <span class="brand-mark"><svg class="brand-bell icon" aria-hidden="true"><use href="#i-bell"></use></svg></span>
+      <span class="brand-name">Wearhouse</span>
+      <span class="brand-caption">Warehouse Management System</span>
+    </button>
     <nav aria-label="Main navigation">
-      <button data-page="dashboard" class="active"><span>⌂</span><b>Overview</b></button>
-      <button data-page="inventory"><span>▦</span><b>Inventory</b></button>
-      <button data-page="activity"><span>◷</span><b>Activity</b></button>
-      <button data-page="deliveries" class="staff-only hidden"><span>⇢</span><b>Delivery / Installation</b></button>
-      <button data-page="admin"><span>⚙</span><b>Staff / Admin</b></button>
-      <button data-page="users" class="admin-only hidden"><span>◎</span><b>Delivery Guys</b></button>
-      <button data-page="serials" class="admin-only hidden"><span>№</span><b>Serials</b></button>
+      <button data-page="dashboard" class="active"><svg class="icon"><use href="#i-dashboard"></use></svg><b>Dashboard</b></button>
+      <button data-page="inventory"><svg class="icon"><use href="#i-package"></use></svg><b>Inventory</b></button>
+      <button data-page="activity"><svg class="icon"><use href="#i-layers"></use></svg><b>Activity</b></button>
+      <button data-page="deliveries" class="staff-only hidden"><svg class="icon"><use href="#i-truck"></use></svg><b>Delivery / Installation</b></button>
+      <button data-page="admin"><svg class="icon"><use href="#i-shield"></use></svg><b>Staff / Admin</b></button>
+      <button data-page="users" class="admin-only hidden"><svg class="icon"><use href="#i-users"></use></svg><b>Delivery Guys</b></button>
+      <button data-page="serials" class="admin-only hidden"><svg class="icon"><use href="#i-barcode"></use></svg><b>Serial Numbers</b></button>
     </nav>
-    <div class="side-bottom"><span class="status"><i id="liveDot"></i><span id="statusText">Connecting</span></span><button id="logout" class="logout hidden">Sign out ↗</button></div>
+    <div class="side-bottom">
+      <div class="sidebar-system glass">
+        <div class="system-top"><span class="system-icon"><svg class="icon"><use href="#i-bell"></use></svg></span><span><strong>Wearhouse</strong><small>Inventory &amp; deliveries</small></span></div>
+        <div class="system-live"><span class="status"><i id="liveDot"></i><span id="statusText">Connecting</span></span><span class="live-caption">System status</span></div>
+      </div>
+      <button id="logout" class="logout hidden"><svg class="icon"><use href="#i-logout"></use></svg><b>Sign out</b></button>
+    </div>
   </aside>
   <main class="main">
     <header class="header">
-      <div><small>WAREHOUSE CONTROL CENTER</small><strong id="hello">Public inventory</strong></div>
-      <div class="tools"><button id="searchBtn" class="tool" title="Search inventory">⌕</button><button id="notificationsBtn" class="tool notification-tool hidden" title="Notifications">♢<span id="notificationBadge" class="notification-badge hidden">0</span></button><button class="tool" id="adminQuick" title="Staff area">↗</button><div class="avatar" id="avatar">W</div></div>
+      <div class="header-identity"><small>WEARHOUSE / CONTROL CENTER</small><strong id="hello">Public inventory</strong></div>
+      <div class="tools">
+        <button id="searchBtn" class="tool" title="Search inventory" aria-label="Search inventory"><svg class="icon"><use href="#i-search"></use></svg></button>
+        <button id="notificationsBtn" class="tool notification-tool hidden" title="Notifications" aria-label="Notifications"><svg class="icon"><use href="#i-bell"></use></svg><span id="notificationBadge" class="notification-badge hidden">0</span></button>
+        <button class="tool" id="adminQuick" title="Staff area" aria-label="Staff area"><svg class="icon"><use href="#i-arrow-up-right"></use></svg></button>
+        <button class="tool tool-brand" data-page="dashboard" title="Go to dashboard" aria-label="Dashboard">W</button>
+        <span class="tool-separator" aria-hidden="true"></span>
+        <button class="profile-trigger" id="profileQuick" type="button" title="Open staff workspace"><span class="avatar" id="avatar">W</span><svg class="icon"><use href="#i-chevron-down"></use></svg></button>
+      </div>
     </header>
     <div id="toast" class="toast" role="status"></div>
     <div id="view"></div>
@@ -112,5 +153,5 @@ SN-000002"></textarea><small class="field-note">For a new product, add every phy
   <button class="primary" id="submitDeliveryNoteBtn">Upload evidence · Complete order</button><p id="deliveryNoteMsg" class="error"></p>
 </form></dialog>
 
-<script src="config.js?v=15"></script><script src="app.js?v=15"></script>
+<script src="config.js?v=16"></script><script src="app.js?v=16"></script>
 </body></html>

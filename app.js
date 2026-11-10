@@ -316,45 +316,126 @@ function render() {
   else if (currentPage === 'notifications') notificationsPage();
 }
 
+function uiIcon(name, extra = '') {
+  return `<svg class="icon ${extra}" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
+}
+
+function dashboardGreeting() {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const raw = String(profile?.full_name || user?.email?.split('@')[0] || 'there');
+  return `${greeting}, ${esc(raw.trim().split(/\s+/)[0] || 'there')}`;
+}
+
+// The visual follows the supplied reference, while every number is drawn from
+// live inventory/activity/order arrays. No decorative sample statistics.
+function dashboardActivityChart() {
+  const windowDays = 30;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Array.from({length:windowDays}, (_, i) => {
+    const day = new Date(today);
+    day.setDate(today.getDate() - (windowDays - i - 1));
+    return { day, key: `${day.getFullYear()}-${day.getMonth()+1}-${day.getDate()}`, count:0 };
+  });
+  const counts = new Map(days.map((d,i) => [d.key, i]));
+  activities.forEach(a => {
+    const date = new Date(a.created_at || a.timestamp || 0);
+    if (Number.isNaN(date.getTime())) return;
+    const key = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
+    const idx=counts.get(key);
+    if (idx !== undefined) days[idx].count++;
+  });
+  const values = days.map(d => d.count);
+  const totalEvents = values.reduce((sum,v)=>sum+v,0);
+  const ymax = Math.max(4, Math.ceil(Math.max(...values) / 4) * 4);
+  const x0=49, x1=734, y0=20, y1=182;
+  const pts=values.map((v,i)=>({x:x0+(x1-x0)*i/(windowDays-1),y:y1-(v/ymax)*(y1-y0)}));
+  const curve = pts.reduce((path,p,i)=>{
+    if(i===0) return `M ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+    const previous=pts[i-1];
+    const before=pts[Math.max(0,i-2)];
+    const after=pts[Math.min(pts.length-1,i+1)];
+    const c1x=previous.x+(p.x-before.x)/6;
+    const c1y=previous.y+(p.y-before.y)/6;
+    const c2x=p.x-(after.x-previous.x)/6;
+    const c2y=p.y-(after.y-previous.y)/6;
+    return `${path} C ${c1x.toFixed(1)} ${c1y.toFixed(1)} ${c2x.toFixed(1)} ${c2y.toFixed(1)} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+  },'');
+  const area = `${curve} L ${x1} ${y1} L ${x0} ${y1} Z`;
+  const gridY=Array.from({length:5},(_,i)=>{
+    const y=y0+(y1-y0)*i/4;
+    const v=Math.round(ymax*(4-i)/4);
+    return `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="rgba(193,255,251,.1)"/><text x="${x0-10}" y="${y+4}" text-anchor="end">${v}</text>`;
+  }).join('');
+  const dateLabel = index => days[index].day.toLocaleDateString('en',{month:'short',day:'numeric'});
+  const gridX=[0,5,10,15,20,25,29].map(i=>{
+    const x=pts[i].x;
+    return `<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" stroke="rgba(193,255,251,.06)"/><text x="${x}" y="208" text-anchor="middle">${dateLabel(i)}</text>`;
+  }).join('');
+  const maxIndex=values.indexOf(Math.max(...values));
+  return {totalEvents,markup:`<svg class="trend-chart" viewBox="0 0 760 225" role="img" aria-label="Daily recorded inventory changes over the last 30 days">
+    <defs><linearGradient id="activityArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#59e7cc" stop-opacity=".52"/><stop offset="1" stop-color="#59e7cc" stop-opacity=".025"/></linearGradient><filter id="trendGlow"><feGaussianBlur stdDeviation="3"/></filter></defs>
+    <g class="chart-grid">${gridY}${gridX}</g>
+    <path d="${area}" fill="url(#activityArea)"/>
+    <path d="${curve}" fill="none" stroke="#9dfff1" stroke-width="6" opacity=".4" filter="url(#trendGlow)"/>
+    <path d="${curve}" fill="none" stroke="#b6fff5" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+    ${totalEvents?`<circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="11" fill="#b5fff5" fill-opacity=".2"/><circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="5.5" fill="#b5fff5"/>`:''}
+  </svg>`};
+}
+
 function dashboard() {
-  const total = products.reduce((n, p) => n + Number(p.quantity || 0), 0);
-  const low = products.filter(p => Number(p.quantity || 0) <= 7).length;
-  const locs = new Set(products.map(p => p.location).filter(Boolean)).size;
-  const cats = new Set(products.map(p => p.category).filter(Boolean)).size;
-  const pending = deliveryRequests.filter(r => r.status === 'pending_admin_approval').length;
-  const active = deliveryRequests.filter(r => ['approved_for_delivery', 'delivery_note_submitted'].includes(r.status)).length;
-
-  const action = isAdmin
-    ? `<button class="ghost" onclick="go('admin')">Open control center</button>`
-    : isDelivery()
-      ? `<button class="ghost" onclick="go('deliveries')">My deliveries</button>`
-      : `<button class="ghost" onclick="loginDialog.showModal()">Staff sign in</button>`;
-
-  view.innerHTML = `
-    <section class="hero">
-      <span class="eyebrow">WAREHOUSE · LIVE OVERVIEW</span>
-      <h1>Everything<br><em>in one place.</em></h1>
-      <p>Live inventory, serialized stock and controlled delivery handover in one system.</p>
-      <div class="hero-actions"><button class="primary" onclick="go('inventory')">Browse inventory <span>→</span></button>${action}</div>
+  const total=products.reduce((sum,p)=>sum+Number(p.quantity||0),0);
+  const lowProducts=products.filter(p=>Number(p.quantity||0)<=7);
+  const low=lowProducts.length;
+  const staffOrders=isStaff()?warehouseOrders:[];
+  const today=new Date().toDateString();
+  const todayOrders=staffOrders.filter(o=>new Date(o.created_at).toDateString()===today).length;
+  const completed=staffOrders.filter(o=>o.status==='completed').length;
+  const awaiting=staffOrders.filter(o=>o.status==='pending_admin_approval').length;
+  const graph=dashboardActivityChart();
+  const locations=[...new Set(products.map(p=>p.location).filter(Boolean))].slice(0,3);
+  const locationCards=locations.map(loc=>{
+    const localProducts=products.filter(p=>p.location===loc);
+    const units=localProducts.reduce((sum,p)=>sum+Number(p.quantity||0),0);
+    const lowLocal=localProducts.filter(p=>Number(p.quantity||0)<=7).length;
+    const share=total>0?Math.round(units/total*100):0;
+    return `<article class="location-card glass">
+      <div class="location-heading"><span class="location-symbol">${uiIcon('home')}</span><div class="location-info"><h3>${esc(loc)}</h3><span>${uiIcon('location')} Stock location</span></div></div>
+      <div class="location-share"><span>Share of inventory</span><strong>${share}%</strong></div>
+      <div class="location-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${share}" aria-label="Share of inventory"><i style="width:${share}%"></i></div>
+      <div class="location-metrics"><div><b>${units.toLocaleString()}</b><span>Units</span></div><div><b>${localProducts.length}</b><span>Products</span></div><div><b>${lowLocal}</b><span>Low stock</span></div></div>
+    </article>`;
+  }).join('') || empty('No locations added','Add inventory to see warehouse locations.');
+  const feed=[...activities].sort((a,b)=>getDateValue(b)-getDateValue(a)).slice(0,4);
+  const feedMarkup=feed.map(a=>{
+    const text=a.action==='created'?'Item added':a.action==='deleted'?'Item removed':'Inventory updated';
+    return `<div class="dashboard-feed-row"><span class="feed-symbol">${uiIcon(a.action==='created'?'package':a.action==='deleted'?'alert':'layers')}</span><div class="feed-body"><b>${esc(a.product_name||text)}</b><small>${esc(text)}${a.actor_email?' · '+esc(a.actor_email.split('@')[0]):''}</small></div><time>${timeAgo(getDateValue(a))}</time></div>`;
+  }).join('') || empty('No recent activity','Inventory updates will show here.');
+  const alerts=[
+    ...(isAdmin&&awaiting?[{name:`${awaiting} order${awaiting===1?'':'s'} awaiting approval`,note:'Review employee-selected serial numbers',page:'deliveries',icon:'clock'}]:[]),
+    ...lowProducts.slice(0,3).map(p=>({name:`Low stock: ${p.name}`,note:`${Number(p.quantity||0)} unit(s) remaining · ${p.location||'Unassigned'}`,page:'inventory',icon:'alert'}))
+  ];
+  const alertMarkup=alerts.slice(0,3).map(a=>`<button class="dashboard-alert-row" onclick="go('${a.page}')"><span class="alert-symbol ${a.icon==='clock'?'waiting':''}">${uiIcon(a.icon)}</span><span><b>${esc(a.name)}</b><small>${esc(a.note)}</small></span>${uiIcon('arrow-right','alert-arrow')}</button>`).join('') || `<div class="dashboard-all-clear">${uiIcon('check')} <span>All caught up — no inventory alerts.</span></div>`;
+  view.innerHTML=`
+    <section class="dashboard-welcome"><div><h1>${dashboardGreeting()}</h1><p>Here's what's happening across your warehouse today.</p></div><div class="dashboard-actions"><button class="glass-action" onclick="go('inventory')">${uiIcon('package')} Inventory</button>${isAdmin?`<button class="glass-action primary-action" onclick="openManagerOrder()">${uiIcon('plus')} New delivery order</button>`:isDelivery()?`<button class="glass-action primary-action" onclick="go('deliveries')">${uiIcon('truck')} My deliveries</button>`:`<button class="glass-action primary-action" onclick="loginDialog.showModal()">Staff sign in</button>`}</div></section>
+    <section class="dashboard-kpis" aria-label="Warehouse metrics">
+      <article class="dashboard-kpi glass"><div class="metric-label">${uiIcon('package')} <span>Total Inventory</span></div><div class="metric-count">${total.toLocaleString()}</div><div class="metric-caption">${products.length} products tracked</div><span class="metric-art cube-art">${uiIcon('package')}</span></article>
+      <article class="dashboard-kpi glass"><div class="metric-label">${uiIcon('boxes')} <span>Orders Today</span></div><div class="metric-count">${todayOrders.toLocaleString()}</div><div class="metric-caption">${isStaff()?'Manager-created orders':'Sign in for staff orders'}</div><span class="metric-art cubes-art">${uiIcon('boxes')}</span></article>
+      <article class="dashboard-kpi glass"><div class="metric-label">${uiIcon('truck')} <span>Completed Orders</span></div><div class="metric-count">${completed.toLocaleString()}</div><div class="metric-caption">${awaiting} waiting for item approval</div><span class="metric-art truck-art">${uiIcon('truck')}</span></article>
+      <article class="dashboard-kpi glass"><div class="metric-label">${uiIcon('alert')} <span>Low Stock</span></div><div class="metric-count">${low.toLocaleString()}</div><div class="metric-caption ${low?'metric-warning':''}">${low?`${low} item(s) need attention`:'No low-stock items'}</div><span class="metric-art warning-art">${uiIcon('alert')}</span></article>
     </section>
-    <section class="stats">
-      <div class="stat glass"><small>Total units</small><b>${total.toLocaleString()}</b><span>all stock combined</span></div>
-      <div class="stat glass"><small>Products</small><b>${products.length}</b><span>unique items</span></div>
-      <div class="stat glass"><small>Low stock</small><b>${low}</b><span>${low ? 'needs attention' : 'everything healthy'}</span></div>
-      <div class="stat glass"><small>${isStaff() ? 'Active deliveries' : 'Locations'}</small><b>${isStaff() ? active + pending : locs}</b><span>${isStaff() ? `${pending} waiting approval` : `${cats} categories`}</span></div>
-    </section>
-    <section class="content">
-      <div class="panel glass">
-        <div class="head"><div><small class="section-label">LATEST</small><h2>Recently added</h2></div><button class="textbtn" onclick="go('inventory')">View all →</button></div>
-        ${products.slice(0, 6).map(itemRow).join('') || empty('No products yet', 'Your first item will appear here.')}
+    <section class="dashboard-content">
+      <div class="dashboard-left-column">
+        <section class="dashboard-panel glass trend-panel"><div class="dashboard-panel-head"><h2>${uiIcon('activity')} Inventory Activity</h2><span class="chart-window">Last 30 Days ${uiIcon('chevron-down')}</span></div><div class="trend-summary"><strong>${graph.totalEvents.toLocaleString()}</strong><span>Recorded changes</span></div><p>Daily activity from the latest inventory events</p>${graph.markup}</section>
+        <section class="dashboard-panel glass warehouse-panel"><div class="dashboard-panel-head"><h2>${uiIcon('home')} Stock Locations</h2><button class="dashboard-panel-link" onclick="${isAdmin?'openAdd()':"go('inventory')"}">${uiIcon(isAdmin?'plus':'arrow-right')} ${isAdmin?'Add inventory':'Browse inventory'}</button></div><div class="location-cards">${locationCards}</div></section>
       </div>
-      <div class="panel glass">
-        <div class="head"><div><small class="section-label">STOCK HEALTH</small><h2>Needs attention</h2></div><span class="pill">${low ? low + ' low' : 'All good'}</span></div>
-        <div class="health">${products.filter(p => Number(p.quantity || 0) <= 7).slice(0, 6).map(p => `<div class="health-row"><span class="health-dot"></span><div><b>${esc(p.name)}</b><small>${Number(p.quantity || 0)} units · ${esc(p.location)}</small></div></div>`).join('') || `<div class="healthy"><span>✓</span><div><b>Everything looks good</b><small>No item is at or below 7 units.</small></div></div>`}</div>
+      <div class="dashboard-right-column">
+        <section class="dashboard-panel glass recent-panel"><div class="dashboard-panel-head"><h2>${uiIcon('clock')} Recent Activity</h2><button class="dashboard-panel-link" onclick="go('activity')">View all ${uiIcon('arrow-right')}</button></div><div class="dashboard-feed">${feedMarkup}</div></section>
+        <section class="dashboard-panel glass alerts-panel"><div class="dashboard-panel-head"><h2>${uiIcon('alert')} Alerts</h2><button class="dashboard-panel-link" onclick="go('${isAdmin&&awaiting?'deliveries':'inventory'}')">View all ${uiIcon('arrow-right')}</button></div><div class="dashboard-alerts">${alertMarkup}</div></section>
       </div>
     </section>`;
 }
-
 function itemRow(p) {
   return `<div class="item"><img class="thumb" src="${safeImg(p.image_url)}" onerror="this.src='${fallback}'"><div class="itemmain"><b>${esc(p.name)}</b><span>${esc(p.category)} · ${esc(p.location)}</span></div><strong>${Number(p.quantity || 0)} pcs</strong><span class="badge ${Number(p.quantity || 0) <= 7 ? 'low' : ''}">${Number(p.quantity || 0) <= 7 ? 'Low' : 'In stock'}</span></div>`;
 }
@@ -1153,6 +1234,8 @@ $('logout').onclick = async () => {
 document.querySelectorAll('.sidebar nav button').forEach(btn => btn.onclick = () => go(btn.dataset.page));
 document.querySelector('.brand')?.addEventListener('click', () => go('dashboard'));
 $('adminQuick')?.addEventListener('click', () => go(isDelivery() ? 'deliveries' : 'admin'));
+document.querySelector('.tool-brand')?.addEventListener('click', () => go('dashboard'));
+$('profileQuick')?.addEventListener('click', () => go(isDelivery() ? 'deliveries' : 'admin'));
 $('notificationsBtn')?.addEventListener('click', () => go('notifications'));
 $('searchBtn')?.addEventListener('click', () => { go('inventory'); setTimeout(() => $('filter')?.focus(), 60); });
 $('pImageFile')?.addEventListener('change', e => { if (e.target.files[0]) preview(URL.createObjectURL(e.target.files[0])); });

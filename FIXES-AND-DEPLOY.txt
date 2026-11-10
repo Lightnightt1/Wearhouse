@@ -1,0 +1,21 @@
+WAREHOUSE REVIEW — targeted safe fixes
+
+1) app.js: Supabase onAuthStateChange no longer awaits Supabase calls inside the auth callback.
+   This prevents a documented potential deadlock on sign-in/sign-out/session refresh.
+2) schema.sql + fix-rejection.sql: qualify the rejection_reason function parameter.
+   This avoids the PostgreSQL column/parameter name conflict when rejecting a request.
+3) README.md: documents the extra database RPC scripts needed by this frontend.
+
+TO DEPLOY
+A. Back up your Supabase database first.
+B. Upload index.html, app.js, styles.css and config.js to your GitHub Pages repo
+   (or replace the whole site's files). Keep your existing Supabase config.
+C. In an existing Supabase project, run only the needed NON-DESTRUCTIVE SQL patches:
+   - fix-rejection.sql for rejecting delivery requests
+   - persistence-safe.sql if create_product_with_serials or stock triggers are absent
+   - inventory-read-fix.sql if warehouse_inventory_products RPC is absent
+D. Hard refresh the website with Ctrl+F5.
+
+DO NOT rerun schema.sql or perform reset/delete SQL on an existing project.
+No live Supabase integration test was performed. Test sign-in, add serials,
+reject a delivery request, and stock counts in a safe/staging environment.

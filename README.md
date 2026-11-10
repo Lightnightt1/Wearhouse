@@ -21,7 +21,16 @@ Edit `config.js` and keep your Supabase URL + publishable/anon key there.
 
 ## 2. Run the database setup
 
-Open **Supabase → SQL Editor**, paste the entire contents of `schema.sql`, then Run.
+**Fresh database only:** In **Supabase → SQL Editor**, run these SQL files in order:
+
+1. `schema.sql`
+2. `persistence-safe.sql` (creates the atomic product+serial RPC and quantity sync trigger)
+3. `inventory-read-fix.sql` (creates the inventory read RPC)
+
+**Existing database:** **Do not rerun `schema.sql` to troubleshoot existing records.**
+If the site cannot create products or load inventory and those functions have not been installed, run
+`persistence-safe.sql` and `inventory-read-fix.sql` once. For an existing database with a rejection error,
+run `fix-rejection.sql`. These patches do not delete inventory rows.
 
 Create your admin user in **Authentication → Users**, then run:
 

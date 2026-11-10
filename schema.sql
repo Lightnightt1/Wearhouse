@@ -341,7 +341,7 @@ begin
   end if;
 
   update public.delivery_requests
-  set status = 'rejected', rejection_reason = coalesce(rejection_reason, '')
+  set status = 'rejected', rejection_reason = coalesce(reject_delivery_request.rejection_reason, '')
   where id = request_id
   returning * into r;
 
@@ -349,7 +349,7 @@ begin
   values (
     r.delivery_guy_id,
     'Delivery rejected',
-    'Your delivery request was rejected.' || case when coalesce(rejection_reason,'') <> '' then ' Reason: ' || rejection_reason else '' end,
+    'Your delivery request was rejected.' || case when coalesce(reject_delivery_request.rejection_reason,'') <> '' then ' Reason: ' || reject_delivery_request.rejection_reason else '' end,
     'delivery',
     r.id
   );

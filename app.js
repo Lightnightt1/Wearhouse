@@ -123,15 +123,24 @@ async function boot() {
     toast(err.message || 'Connection failed', 'error');
   }
 
-  sb.auth.onAuthStateChange(async (event, session) => {
-    user = session?.user || null;
-    await refreshAuth();
-    await loadAll();
-    if (isDelivery()) currentPage = 'deliveries';
-    subscribeRealtime();
-    if (event === 'SIGNED_IN' && isDelivery()) currentPage = 'deliveries';
-    if (!user && ['deliveries', 'users', 'serials', 'notifications'].includes(currentPage)) currentPage = 'dashboard';
-    render();
+  // Supabase auth callbacks must stay synchronous. Calling Supabase APIs while
+  // the auth event is being processed can deadlock the client.
+  sb.auth.onAuthStateChange((event, session) => {
+    const nextUser = session?.user || null;
+    setTimeout(async () => {
+      try {
+        user = nextUser;
+        await refreshAuth();
+        await loadAll();
+        if (isDelivery()) currentPage = 'deliveries';
+        subscribeRealtime();
+        if (!user && ['deliveries', 'users', 'serials', 'notifications'].includes(currentPage)) currentPage = 'dashboard';
+        render();
+      } catch (err) {
+        console.error('Auth refresh failed:', err);
+        toast(err.message || 'Could not refresh your session.', 'error');
+      }
+    }, 0);
   });
 }
 

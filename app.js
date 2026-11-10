@@ -7,7 +7,7 @@ const configured =
   !String(C.SUPABASE_ANON_KEY).includes('PASTE');
 
 const sb = configured && window.supabase
-  ? supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY)
+  ? supabase.createClient(C.SUPABASE_URL, C.SUPABASE_ANON_KEY, {auth: {storageKey: "wearhouse-trade-auth-v1"}})
   : null;
 
 let products = [];

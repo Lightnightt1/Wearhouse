@@ -1,33 +1,28 @@
-WEARHOUSE — GLASSMORPHISM WEBSITE UPDATE
-=======================================
+WEARHOUSE — INVENTORY EDITOR UPDATE
 
-This is the actual Wearhouse website, not a static mockup.
-It uses the existing Supabase Trade project and retains the existing
-manager-created delivery orders, serial selection, approval/rejection,
-proof upload, and automatic completion workflow.
+New: Edit item allows administrators to edit the product and manage its serial numbers
+within the SAME edit dialog. Quantity updates to reflect serialized physical stock.
 
-NEW VISUALS
-- Bell logo and matching favicon
-- Glass-style sidebar, buttons, cards, modals, tables, notifications
-- Teal frosted-glass dashboard following the approved screenshot design
-- Responsive layout on desktop, tablet and mobile
-- Dashboard metrics from actual warehouse data, not mockup statistics
-- Activity chart from the latest recorded inventory changes
+- Change product quantity: increasing quantity adds serial input fields.
+  Each new physical unit MUST have its own serial number.
+- To reduce quantity, remove the exact unused serials with the × buttons.
+- Existing unused serials can be renamed.
+- Serial numbers with delivery history, or reserved/out/delivered serials,
+  are protected and shown as read-only to preserve audit records.
+- Serial edits, quantity and product details are saved in one transaction.
+- Existing glassmorphism theme and delivery-order workflows are unchanged.
 
-HOW TO PUBLISH ON GITHUB PAGES
-1) Open the GitHub repository for the Wearhouse site.
-2) Upload/replace these FIVE files in the web root:
-   index.html
-   app.js
-   styles.css
-   config.js
-   favicon.svg
-3) Commit the changes to the branch used by GitHub Pages.
-4) Refresh the live website (Ctrl+F5 if your browser caches the old theme).
+DATABASE
+The new manager-only Supabase function admin_update_product_and_serials is ALREADY
+installed in the connected Trade database and verified. You do NOT need to
+run the migration file when publishing this zip.
 
-Do not upload desktop-preview.png or mobile-preview.png — those use sample
-browser-only data for visual QA and are not part of the live website.
-No Supabase SQL migration is needed for this visual change.
+DEPLOY TO GITHUB PAGES
+1. Extract this ZIP archive.
+2. Replace these files at the Wearhouse GitHub repository root:
+   index.html, app.js, styles.css, config.js, favicon.svg
+3. Commit changes.
+4. Refresh the Wearhouse website (Ctrl+F5 if needed).
 
-ملاحظة: هذا هو الموقع الفعلي، وليس مجرد تصميم صورة. ارفع الملفات الخمسة
-إلى مستودع Wearhouse واستبدل الملفات الحالية ثم اضغط Commit changes.
+Important: keep all serials associated with deliveries intact.
+No inventory or delivery data was changed during the test; test DB transactions rolled back.

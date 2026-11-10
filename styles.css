@@ -1778,3 +1778,23 @@ body{font-feature-settings:"cv11","ss01";letter-spacing:-.01em}
   .brand-mark{height:58px;width:65px;margin-bottom:4px}.brand-bell{height:55px;width:54px}
   .sidebar nav{margin-top:15px;gap:3px}.sidebar nav button{padding-top:10px;padding-bottom:10px}
 }
+
+
+/* Edit item: integrated inventory quantity / serial number manager */
+#productDialog .modal { max-height:calc(100dvh - 28px);overflow-y:auto; scrollbar-width:thin; }
+.edit-serial-editor{margin-top:16px;padding:13px;border:1px solid rgba(170,255,241,.28);border-radius:15px;background:rgba(0,25,32,.24)}
+.edit-serial-editor.hidden{display:none!important}
+.edit-serial-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.edit-serial-title strong{font-size:13px;color:#e7fffc}
+.edit-serial-rows{max-height:min(290px,35vh);min-height:46px;overflow-y:auto;margin-top:12px;padding-right:3px;scrollbar-width:thin}
+.edit-serial-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(208,255,248,.13)}
+.edit-serial-row input{flex:1;min-width:0;margin:0!important;padding:10px 11px!important;font-size:12px!important}
+.edit-serial-row .smallbtn{flex:none;min-width:32px;padding:8px 10px}
+.edit-serial-row.protected{opacity:.68;flex-wrap:wrap}
+.edit-serial-row.protected input{cursor:not-allowed}
+.edit-serial-tag{flex:0 0 23px;text-align:right;font-size:10px;color:#a7dbd6}
+.edit-serial-lock{font-size:10px;color:#b7e7e2;white-space:nowrap}
+.edit-serial-add{width:100%;margin:13px 0 5px;padding:11px 12px!important;border-color:#9ffce67a!important;color:#d5fff8!important;background:rgba(109,238,216,.11)!important}
+.edit-serial-add:hover{background:rgba(109,238,216,.2)!important}
+#editSerialStatus{color:#bffaf1!important;font-size:10px!important;line-height:1.4!important}
+@media(max-width:520px){.edit-serial-lock{flex-basis:100%;padding-left:30px}.edit-serial-row.protected{gap:5px}}

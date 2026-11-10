@@ -25,6 +25,7 @@ let currentPage = 'dashboard';
 let realtimeChannel = null;
 let realtimeTimer = null;
 let selectedDriverSerialIds = [];
+let editingSerialRows = [];
 
 const $ = id => document.getElementById(id);
 const view = $('view');
@@ -642,13 +643,97 @@ function go(page) {
   render();
 }
 
+function serialQuantityInEditor() {
+  return editingSerialRows.filter(r => r.status !== 'delivered').length;
+}
+
+function syncEditSerialCount() {
+  const current = serialQuantityInEditor();
+  if ($('pQty')) $('pQty').value = String(current);
+  if ($('editSerialCount')) {
+    const editable = editingSerialRows.filter(r => !r.locked).length;
+    const protectedCount = editingSerialRows.filter(r => r.locked).length;
+    $('editSerialCount').textContent = `${current} in stock · ${editable} editable · ${protectedCount} protected`;
+  }
+}
+
+function renderEditSerialRows() {
+  const container = $('editSerialRows');
+  if (!container) return;
+  container.innerHTML = editingSerialRows.map((row, i) => {
+    if (row.locked) {
+      const status = row.status === 'delivered' ? 'Delivered · history' : row.status === 'available' ? 'Used in an order · history' : statusLabel(row.status);
+      return `<div class="edit-serial-row protected"><span class="edit-serial-tag">${esc(String(i + 1))}</span><input type="text" value="${esc(row.serial_number)}" disabled aria-label="Protected serial number"><span class="edit-serial-lock">${esc(status)}</span></div>`;
+    }
+    return `<div class="edit-serial-row"><span class="edit-serial-tag">${esc(String(i + 1))}</span><input type="text" value="${esc(row.serial_number)}" maxlength="120" required placeholder="Enter serial number" aria-label="Serial number ${i + 1}" oninput="editSerialValue(${i}, this.value)"><button type="button" class="smallbtn danger" onclick="removeEditSerialRow(${i})" aria-label="Remove serial number">×</button></div>`;
+  }).join('') || '<p class="field-note">No serial numbers yet. Add one to increase the quantity.</p>';
+  syncEditSerialCount();
+}
+
+function editSerialValue(i, value) {
+  if (!editingSerialRows[i] || editingSerialRows[i].locked) return;
+  editingSerialRows[i].serial_number = value;
+  if ($('editSerialStatus')) $('editSerialStatus').textContent = '';
+}
+
+function addEditSerialRow() {
+  if (!$('productId')?.value || !isAdmin) return;
+  if (editingSerialRows.length >= 1000) return toast('Maximum 1,000 serials per edit.','error');
+  editingSerialRows.push({id:null, serial_number:'', status:'available', locked:false});
+  renderEditSerialRows();
+  $('editSerialRows')?.querySelector('.edit-serial-row:last-child input')?.focus();
+}
+
+function removeEditSerialRow(i) {
+  const row=editingSerialRows[i];
+  if (!row || row.locked) return;
+  if (row.id && !confirm(`Remove serial ${row.serial_number}? The change will take effect when you save.`)) return;
+  editingSerialRows.splice(i,1);
+  renderEditSerialRows();
+}
+
+function adjustEditSerialQuantity() {
+  if (!$('productId')?.value) return;
+  const desired = Number($('pQty').value);
+  if (!Number.isInteger(desired) || desired < 0 || desired > 10000) {
+    $('editSerialStatus').textContent='Enter a valid quantity.';
+    return;
+  }
+  const minimum=editingSerialRows.filter(r => r.locked && r.status !== 'delivered').length;
+  if (desired < minimum) {
+    $('editSerialStatus').textContent=`Cannot reduce below ${minimum}. These items are protected by delivery records.`;
+    return;
+  }
+  const current = serialQuantityInEditor();
+  if (desired > current) {
+    const difference = desired-current;
+    if (editingSerialRows.length+difference > 1000) {
+      $('editSerialStatus').textContent='Too many serial numbers for one edit.';
+      return;
+    }
+    for(let i=0;i<difference;i++) editingSerialRows.push({id:null,serial_number:'',status:'available',locked:false});
+    renderEditSerialRows();
+    $('editSerialStatus').textContent=`Fill in the ${difference} new serial number${difference===1?'':'s'} before saving.`;
+  } else if (desired < current) {
+    // Never guess which physical serial to delete from stock.
+    $('editSerialStatus').textContent=`Remove ${current-desired} unused serial number${current-desired===1?'':'s'} using × below. Do not remove delivered or reserved items.`;
+    $('editSerialRows')?.scrollIntoView({behavior:'smooth',block:'nearest'});
+  } else {
+    $('editSerialStatus').textContent='';
+    syncEditSerialCount();
+  }
+}
+
 function openAdd() {
   if (!isAdmin) return loginDialog.showModal();
   $('productForm').reset();
   $('productId').value = '';
   $('formTitle').textContent = 'Add item + serials';
   $('formMsg').textContent = '';
-  if ($('pQty')) $('pQty').value = '0';
+  editingSerialRows = [];
+  if ($('pQty')) { $('pQty').value='0'; $('pQty').readOnly=true; }
+  if ($('pQtyHelp')) $('pQtyHelp').textContent='Calculated automatically from serial numbers.';
+  $('editSerialEditor')?.classList.add('hidden');
   if ($('pSerialsLabel')) $('pSerialsLabel').classList.remove('hidden');
   if ($('pSerials')) {
     $('pSerials').value = '';
@@ -664,8 +749,18 @@ function editProduct(id) {
   $('productId').value = p.id;
   $('pName').value = p.name || '';
   $('pDesc').value = p.description || '';
-  $('pQty').value = p.quantity ?? 0;
+  const previouslyUsedSerialIds = new Set(deliveryRequests.map(r => r.unit_id));
+  editingSerialRows = serials.filter(s => s.product_id === p.id).map(s => ({
+    id:s.id, serial_number:s.serial_number, status:s.status,
+    locked:s.status !== 'available' || previouslyUsedSerialIds.has(s.id)
+  }));
+  $('pQty').readOnly = false;
+  $('pQty').value = String(editingSerialRows.filter(r => r.status !== 'delivered').length);
+  if ($('pQtyHelp')) $('pQtyHelp').textContent='Change this number to add serial fields; use × below to reduce quantity.';
   if ($('pSerialsLabel')) $('pSerialsLabel').classList.add('hidden');
+  $('editSerialEditor')?.classList.remove('hidden');
+  $('editSerialStatus').textContent = '';
+  renderEditSerialRows();
   if ($('pSerials')) {
     $('pSerials').value = '';
     $('pSerials').required = false;
@@ -1173,11 +1268,24 @@ $('productForm').onsubmit = async e => {
     };
 
     if (id) {
-      const { data, error } = await sb.from('products').update(payload).eq('id', id).select('*').single();
+      const editable = editingSerialRows.filter(r => !r.locked);
+      const values = editingSerialRows.map(r => r.serial_number.trim());
+      if (values.some(x => !x || x.length > 120)) throw Error('Every serial number must be filled in (max 120 characters).');
+      if (new Set(values).size !== values.length) throw Error('Duplicate serial number in this product.');
+      const desiredQty=Number($('pQty').value);
+      const calculatedQty=serialQuantityInEditor();
+      if (!Number.isInteger(desiredQty) || desiredQty !== calculatedQty)
+        throw Error(`Quantity must match the physical serial numbers (${calculatedQty}). Add or remove serials before saving.`);
+      const {data,error}=await sb.rpc('admin_update_product_and_serials',{
+        p_product_id:id, p_name:payload.name,p_description:payload.description,
+        p_location:payload.location,p_category:payload.category,p_price:payload.price,
+        p_image_url:payload.image_url,p_expected_quantity:desiredQty,
+        p_editable_serials:editable.map(r=>({id:r.id,serial_number:r.serial_number.trim()}))
+      });
       if (error) throw error;
-      const i = products.findIndex(p => p.id === id);
-      if (i >= 0 && data) products[i] = data;
-      toast('Item updated');
+      const i=products.findIndex(p=>p.id===id);
+      if (i>=0 && data) products[i]=data;
+      toast('Item, quantity and serial numbers updated.');
     } else {
       // Create the product and all serials in ONE database transaction.
       // If any serial already exists, Supabase rolls the whole attempt back.
@@ -1248,5 +1356,6 @@ $('drSerialSearch')?.addEventListener('focus', renderDriverSerialSelection);
 $('deliveryNoteForm')?.addEventListener('submit', submitDeliveryNote);
 
 $('pSerials')?.addEventListener('input', syncProductQuantityFromSerials);
+$('pQty')?.addEventListener('change', adjustEditSerialQuantity);
 
 boot();

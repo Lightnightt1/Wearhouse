@@ -6,8 +6,8 @@
 <title>Wearhouse — Inventory & Delivery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=16">
-<link rel="stylesheet" href="styles.css?v=16">
+<link rel="icon" type="image/svg+xml" href="favicon.svg?v=17">
+<link rel="stylesheet" href="styles.css?v=17">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -89,10 +89,17 @@
   <button type="button" class="close" onclick="productDialog.close()">×</button><span class="eyebrow">INVENTORY ITEM</span><h2 id="formTitle">Add item</h2><input id="productId" type="hidden">
   <label>Name<input id="pName" required maxlength="120" placeholder="Product name"></label>
   <label>Description<textarea id="pDesc" maxlength="500" placeholder="Short description"></textarea></label>
-  <div class="twocol"><label>Quantity<input id="pQty" type="number" min="0" readonly placeholder="Auto from serials"><small class="field-note">Calculated automatically from serial numbers.</small></label><label>Location<input id="pLoc" required maxlength="50" placeholder="A-01"></label></div>
+  <div class="twocol"><label>Quantity<input id="pQty" type="number" min="0" max="10000" readonly placeholder="Auto from serials"><small id="pQtyHelp" class="field-note">Calculated automatically from serial numbers.</small></label><label>Location<input id="pLoc" required maxlength="50" placeholder="A-01"></label></div>
   <label id="pSerialsLabel">Serial numbers<textarea id="pSerials" rows="5" placeholder="One serial per line, for example:
 SN-000001
 SN-000002"></textarea><small class="field-note">For a new product, add every physical unit serial here. Quantity is calculated automatically.</small></label>
+  <section id="editSerialEditor" class="edit-serial-editor hidden" aria-label="Edit product serial numbers">
+    <div class="edit-serial-title"><strong>Serial numbers</strong><span id="editSerialCount" class="pill">0 available</span></div>
+    <p class="field-note">Edit a serial here, add a new serial or remove an unused one. Serial numbers that were used in delivery orders are protected.</p>
+    <div id="editSerialRows" class="edit-serial-rows"></div>
+    <button type="button" class="smallbtn edit-serial-add" onclick="addEditSerialRow()">＋ Add serial number</button>
+    <p class="field-note" id="editSerialStatus" aria-live="polite"></p>
+  </section>
   <div class="twocol"><label>Category<input id="pCat" maxlength="60" placeholder="General"></label><label>Price (OMR)<input id="pPrice" type="number" min="0" step=".01" placeholder="0.00"></label></div>
   <label>Product image<input id="pImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><small class="field-note">PNG, JPG, WEBP or GIF · max 5 MB</small></label>
   <label>Or image URL<input id="pImage" placeholder="https://..."></label><div id="imagePreview" class="image-preview hidden"></div>
@@ -153,5 +160,5 @@ SN-000002"></textarea><small class="field-note">For a new product, add every phy
   <button class="primary" id="submitDeliveryNoteBtn">Upload evidence · Complete order</button><p id="deliveryNoteMsg" class="error"></p>
 </form></dialog>
 
-<script src="config.js?v=16"></script><script src="app.js?v=16"></script>
+<script src="config.js?v=17"></script><script src="app.js?v=17"></script>
 </body></html>

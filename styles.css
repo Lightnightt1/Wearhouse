@@ -1840,3 +1840,32 @@ body :is(h1,h2,h3,h4,p,span,strong,b,small,label,a,td,th,li,summary){color:var(-
 body input,body textarea,body select{color:var(--ink)}
 body input::placeholder,body textarea::placeholder{color:color-mix(in srgb,var(--ink) 58%,transparent)}
 @media(max-width:600px){.theme-modal{inset:70px 10px auto auto;width:min(340px,calc(100vw - 20px));padding:18px;max-height:calc(100dvh - 82px)}}
+
+
+/* Personal theme: third picker controls the marine/glass panel surfaces only. */
+:root{--surface:#0b3438}
+html[data-custom-theme="true"] .sidebar,
+html[data-custom-theme="true"] .panel,
+html[data-custom-theme="true"] .product,
+html[data-custom-theme="true"] .stat,
+html[data-custom-theme="true"] .delivery-card,
+html[data-custom-theme="true"] .dashboard-kpi,
+html[data-custom-theme="true"] .location-card,
+html[data-custom-theme="true"] .activity-card,
+html[data-custom-theme="true"] .recent-activity,
+html[data-custom-theme="true"] .alert-card{
+  background:linear-gradient(
+    145deg,
+    color-mix(in srgb,var(--surface) 88%,white 12%),
+    color-mix(in srgb,var(--surface) 94%,transparent)
+  ) !important;
+  border-color:color-mix(in srgb,var(--surface) 58%,white 42%);
+}
+/* Keep action/button colors independent from the three personal color controls. */
+html[data-custom-theme="true"] .primary,
+html[data-custom-theme="true"] .glass-action.primary-action,
+html[data-custom-theme="true"] .tool-brand,
+html[data-custom-theme="true"] .sidebar nav button.active{
+  color:inherit;
+}
+.theme-preview{background:linear-gradient(145deg,color-mix(in srgb,var(--preview-surface,#0b3438) 88%,white 12%),var(--preview-surface,#0b3438))}

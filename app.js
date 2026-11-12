@@ -169,32 +169,36 @@ async function refreshAuth() {
   updateAuth();
 }
 
-const DEFAULT_THEME = { text: '#f4ffff', bg: '#052a30', accent: '#aaffef' };
+const DEFAULT_THEME = { text: '#f4ffff', bg: '#052a30', accent: '#aaffef', surface: '#0b3438' };
 const validThemeColor = value => /^#[0-9a-f]{6}$/i.test(value || '');
 let pendingTheme = { ...DEFAULT_THEME };
 function applyTheme(theme, enabled = true) {
   const safe = {
     text: validThemeColor(theme?.text) ? theme.text : DEFAULT_THEME.text,
     bg: validThemeColor(theme?.bg) ? theme.bg : DEFAULT_THEME.bg,
-    accent: validThemeColor(theme?.accent) ? theme.accent : DEFAULT_THEME.accent
+    accent: validThemeColor(theme?.accent) ? theme.accent : DEFAULT_THEME.accent,
+    surface: validThemeColor(theme?.surface) ? theme.surface : DEFAULT_THEME.surface
   };
   const root = document.documentElement;
   if (enabled) {
     root.style.setProperty('--ink', safe.text);
     root.style.setProperty('--bg', safe.bg);
     root.style.setProperty('--accent', safe.accent);
+    root.style.setProperty('--surface', safe.surface);
     root.dataset.customTheme = 'true';
   } else {
-    ['--ink','--bg','--accent'].forEach(name => root.style.removeProperty(name));
+    ['--ink','--bg','--accent','--surface'].forEach(name => root.style.removeProperty(name));
     delete root.dataset.customTheme;
   }
   if ($('themeTextColor')) $('themeTextColor').value = safe.text;
   if ($('themeBgColor')) $('themeBgColor').value = safe.bg;
   if ($('themeAccentColor')) $('themeAccentColor').value = safe.accent;
+  if ($('themeSurfaceColor')) $('themeSurfaceColor').value = safe.surface;
   if ($('themePreview')) {
     $('themePreview').style.color = safe.text;
     $('themePreview').style.backgroundColor = safe.bg;
     $('themePreview').style.setProperty('--preview-accent', safe.accent);
+    $('themePreview').style.setProperty('--preview-surface', safe.surface);
   }
   return safe;
 }
@@ -218,6 +222,7 @@ function previewThemeChange(key, value) {
 $('themeTextColor')?.addEventListener('input', e => previewThemeChange('text', e.target.value));
 $('themeBgColor')?.addEventListener('input', e => previewThemeChange('bg', e.target.value));
 $('themeAccentColor')?.addEventListener('input', e => previewThemeChange('accent', e.target.value));
+$('themeSurfaceColor')?.addEventListener('input', e => previewThemeChange('surface', e.target.value));
 $('themeReset')?.addEventListener('click', () => {
   pendingTheme = { ...DEFAULT_THEME };
   applyTheme(pendingTheme, true);

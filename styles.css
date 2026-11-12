@@ -1902,11 +1902,14 @@ html[data-custom-theme="true"] .selected-serials {
 }
 
 
-/* Panels / marine color also drives the marine-tinted warehouse pictograms and their glow. */
+/* Picker 3 (Accent / neon) controls icon colors and all icon/neon glow.
+   Picker 4 (Panels / marine) remains responsible for panel surfaces only. */
 html[data-custom-theme="true"] {
-  --surface-icon: color-mix(in srgb, var(--surface) 52%, white 48%);
-  --surface-glow: color-mix(in srgb, var(--surface) 38%, white 62%);
+  --neon-icon: var(--accent);
+  --neon-glow: color-mix(in srgb, var(--accent) 78%, transparent);
 }
+html[data-custom-theme="true"] .brand-bell,
+html[data-custom-theme="true"] .system-icon .icon,
 html[data-custom-theme="true"] .metric-art,
 html[data-custom-theme="true"] .metric-label > .icon,
 html[data-custom-theme="true"] .dashboard-panel-head h2 > .icon,
@@ -1917,16 +1920,26 @@ html[data-custom-theme="true"] .feed-symbol > .icon,
 html[data-custom-theme="true"] .alert-symbol:not(.waiting),
 html[data-custom-theme="true"] .alert-symbol:not(.waiting) > .icon,
 html[data-custom-theme="true"] .system-icon,
-html[data-custom-theme="true"] .system-icon > .icon {
-  color: var(--surface-icon) !important;
+html[data-custom-theme="true"] .sidebar nav button > .icon {
+  color: var(--neon-icon) !important;
 }
-html[data-custom-theme="true"] .metric-art {
-  filter: drop-shadow(0 0 8px var(--surface-glow)) drop-shadow(0 0 20px color-mix(in srgb, var(--surface-glow) 65%, transparent)) !important;
+html[data-custom-theme="true"] .brand-bell,
+html[data-custom-theme="true"] .system-icon .icon,
+html[data-custom-theme="true"] .metric-art,
+html[data-custom-theme="true"] .location-symbol,
+html[data-custom-theme="true"] .feed-symbol,
+html[data-custom-theme="true"] .alert-symbol:not(.waiting) {
+  filter: drop-shadow(0 0 7px var(--neon-glow)) drop-shadow(0 0 18px var(--neon-glow)) !important;
 }
 html[data-custom-theme="true"] .location-symbol,
 html[data-custom-theme="true"] .feed-symbol,
 html[data-custom-theme="true"] .system-icon {
-  background: color-mix(in srgb, var(--surface) 72%, transparent) !important;
-  border-color: color-mix(in srgb, var(--surface-icon) 42%, transparent) !important;
-  box-shadow: inset 0 1px color-mix(in srgb, var(--surface-icon) 20%, transparent), 0 0 14px color-mix(in srgb, var(--surface-glow) 24%, transparent) !important;
+  border-color: color-mix(in srgb, var(--accent) 46%, transparent) !important;
+  box-shadow: inset 0 1px color-mix(in srgb, var(--accent) 20%, transparent), 0 0 14px color-mix(in srgb, var(--accent) 30%, transparent) !important;
+}
+html[data-custom-theme="true"] .trend-chart path[filter],
+html[data-custom-theme="true"] .trend-chart path:not([fill]),
+html[data-custom-theme="true"] .trend-chart circle {
+  stroke: var(--accent) !important;
+  fill: var(--accent) !important;
 }

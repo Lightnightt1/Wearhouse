@@ -445,12 +445,12 @@ function dashboardActivityChart() {
   }).join('');
   const maxIndex=values.indexOf(Math.max(...values));
   return {totalEvents,markup:`<svg class="trend-chart" viewBox="0 0 760 225" role="img" aria-label="Daily recorded inventory changes over the last 30 days">
-    <defs><linearGradient id="activityArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#59e7cc" stop-opacity=".52"/><stop offset="1" stop-color="#59e7cc" stop-opacity=".025"/></linearGradient><filter id="trendGlow"><feGaussianBlur stdDeviation="3"/></filter></defs>
+    <defs><linearGradient id="activityArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".52"/><stop offset="1" stop-color="var(--accent)" stop-opacity=".025"/></linearGradient><filter id="trendGlow"><feGaussianBlur stdDeviation="3"/></filter></defs>
     <g class="chart-grid">${gridY}${gridX}</g>
     <path d="${area}" fill="url(#activityArea)"/>
-    <path d="${curve}" fill="none" stroke="#9dfff1" stroke-width="6" opacity=".4" filter="url(#trendGlow)"/>
-    <path d="${curve}" fill="none" stroke="#b6fff5" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-    ${totalEvents?`<circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="11" fill="#b5fff5" fill-opacity=".2"/><circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="5.5" fill="#b5fff5"/>`:''}
+    <path d="${curve}" fill="none" stroke="var(--accent)" stroke-width="6" opacity=".4" filter="url(#trendGlow)"/>
+    <path d="${curve}" fill="none" stroke="var(--accent)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+    ${totalEvents?`<circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="11" fill="var(--accent)" fill-opacity=".2"/><circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="5.5" fill="var(--accent)"/>`:''}
   </svg>`};
 }
 

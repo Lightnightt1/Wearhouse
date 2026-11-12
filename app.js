@@ -169,36 +169,40 @@ async function refreshAuth() {
   updateAuth();
 }
 
-const DEFAULT_THEME = { text: '#f4ffff', bg: '#052a30', accent: '#aaffef', surface: '#0b3438' };
+const DEFAULT_THEME = { text: '#f4ffff', bg: '#052a30', glow: '#aaffef', logos: '#aaffef' };
 const validThemeColor = value => /^#[0-9a-f]{6}$/i.test(value || '');
 let pendingTheme = { ...DEFAULT_THEME };
-function applyTheme(theme, enabled = true) {
-  const safe = {
+function normalizeTheme(theme) {
+  // Backward compatibility: old saved accent becomes glow; logos keep the original aqua default.
+  return {
     text: validThemeColor(theme?.text) ? theme.text : DEFAULT_THEME.text,
     bg: validThemeColor(theme?.bg) ? theme.bg : DEFAULT_THEME.bg,
-    accent: validThemeColor(theme?.accent) ? theme.accent : DEFAULT_THEME.accent,
-    surface: validThemeColor(theme?.surface) ? theme.surface : DEFAULT_THEME.surface
+    glow: validThemeColor(theme?.glow) ? theme.glow : (validThemeColor(theme?.accent) ? theme.accent : DEFAULT_THEME.glow),
+    logos: validThemeColor(theme?.logos) ? theme.logos : DEFAULT_THEME.logos
   };
+}
+function applyTheme(theme, enabled = true) {
+  const safe = normalizeTheme(theme);
   const root = document.documentElement;
   if (enabled) {
     root.style.setProperty('--ink', safe.text);
     root.style.setProperty('--bg', safe.bg);
-    root.style.setProperty('--accent', safe.accent);
-    root.style.setProperty('--surface', safe.surface);
+    root.style.setProperty('--glow', safe.glow);
+    root.style.setProperty('--logo-color', safe.logos);
     root.dataset.customTheme = 'true';
   } else {
-    ['--ink','--bg','--accent','--surface'].forEach(name => root.style.removeProperty(name));
+    ['--ink','--bg','--glow','--logo-color'].forEach(name => root.style.removeProperty(name));
     delete root.dataset.customTheme;
   }
   if ($('themeTextColor')) $('themeTextColor').value = safe.text;
   if ($('themeBgColor')) $('themeBgColor').value = safe.bg;
-  if ($('themeAccentColor')) $('themeAccentColor').value = safe.accent;
-  if ($('themeSurfaceColor')) $('themeSurfaceColor').value = safe.surface;
+  if ($('themeAccentColor')) $('themeAccentColor').value = safe.glow;
+  if ($('themeSurfaceColor')) $('themeSurfaceColor').value = safe.logos;
   if ($('themePreview')) {
     $('themePreview').style.color = safe.text;
     $('themePreview').style.backgroundColor = safe.bg;
-    $('themePreview').style.setProperty('--preview-accent', safe.accent);
-    $('themePreview').style.setProperty('--preview-surface', safe.surface);
+    $('themePreview').style.setProperty('--preview-glow', safe.glow);
+    $('themePreview').style.setProperty('--preview-logo', safe.logos);
   }
   return safe;
 }
@@ -221,8 +225,8 @@ function previewThemeChange(key, value) {
 }
 $('themeTextColor')?.addEventListener('input', e => previewThemeChange('text', e.target.value));
 $('themeBgColor')?.addEventListener('input', e => previewThemeChange('bg', e.target.value));
-$('themeAccentColor')?.addEventListener('input', e => previewThemeChange('accent', e.target.value));
-$('themeSurfaceColor')?.addEventListener('input', e => previewThemeChange('surface', e.target.value));
+$('themeAccentColor')?.addEventListener('input', e => previewThemeChange('glow', e.target.value));
+$('themeSurfaceColor')?.addEventListener('input', e => previewThemeChange('logos', e.target.value));
 $('themeReset')?.addEventListener('click', () => {
   pendingTheme = { ...DEFAULT_THEME };
   applyTheme(pendingTheme, true);
@@ -445,12 +449,12 @@ function dashboardActivityChart() {
   }).join('');
   const maxIndex=values.indexOf(Math.max(...values));
   return {totalEvents,markup:`<svg class="trend-chart" viewBox="0 0 760 225" role="img" aria-label="Daily recorded inventory changes over the last 30 days">
-    <defs><linearGradient id="activityArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--accent)" stop-opacity=".52"/><stop offset="1" stop-color="var(--accent)" stop-opacity=".025"/></linearGradient><filter id="trendGlow"><feGaussianBlur stdDeviation="3"/></filter></defs>
+    <defs><linearGradient id="activityArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--glow)" stop-opacity=".52"/><stop offset="1" stop-color="var(--glow)" stop-opacity=".025"/></linearGradient><filter id="trendGlow"><feGaussianBlur stdDeviation="3"/></filter></defs>
     <g class="chart-grid">${gridY}${gridX}</g>
     <path d="${area}" fill="url(#activityArea)"/>
-    <path d="${curve}" fill="none" stroke="var(--accent)" stroke-width="6" opacity=".4" filter="url(#trendGlow)"/>
-    <path d="${curve}" fill="none" stroke="var(--accent)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-    ${totalEvents?`<circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="11" fill="var(--accent)" fill-opacity=".2"/><circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="5.5" fill="var(--accent)"/>`:''}
+    <path d="${curve}" fill="none" stroke="var(--glow)" stroke-width="6" opacity=".4" filter="url(#trendGlow)"/>
+    <path d="${curve}" fill="none" stroke="var(--glow)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+    ${totalEvents?`<circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="11" fill="var(--glow)" fill-opacity=".2"/><circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="5.5" fill="var(--glow)"/>`:''}
   </svg>`};
 }
 

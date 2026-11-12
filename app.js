@@ -169,7 +169,48 @@ async function refreshAuth() {
   updateAuth();
 }
 
+const DEFAULT_THEME = { text: '#f4ffff', bg: '#052a30' };
+let pendingTheme = { ...DEFAULT_THEME };
+function applyTheme(theme) {
+  const safe = {
+    text: /^#[0-9a-f]{6}$/i.test(theme?.text || '') ? theme.text : DEFAULT_THEME.text,
+    bg: /^#[0-9a-f]{6}$/i.test(theme?.bg || '') ? theme.bg : DEFAULT_THEME.bg
+  };
+  document.documentElement.style.setProperty('--ink', safe.text);
+  document.documentElement.style.setProperty('--bg', safe.bg);
+  if ($('themeTextColor')) $('themeTextColor').value = safe.text;
+  if ($('themeBgColor')) $('themeBgColor').value = safe.bg;
+  if ($('themePreview')) { $('themePreview').style.color = safe.text; $('themePreview').style.backgroundColor = safe.bg; }
+  return safe;
+}
+function loadAccountTheme() {
+  const saved = user?.user_metadata?.wearhouse_theme || DEFAULT_THEME;
+  pendingTheme = applyTheme(saved);
+}
+function openThemeEditor() {
+  if (!user) return;
+  pendingTheme = applyTheme(user.user_metadata?.wearhouse_theme || DEFAULT_THEME);
+  $('themeMsg').textContent = '';
+  $('themeDialog').showModal();
+}
+$('themeBtn')?.addEventListener('click', openThemeEditor);
+$('themeClose')?.addEventListener('click', () => $('themeDialog').close());
+$('themeDialog')?.addEventListener('close', () => { pendingTheme = applyTheme(user?.user_metadata?.wearhouse_theme || DEFAULT_THEME); });
+$('themeTextColor')?.addEventListener('input', e => { pendingTheme.text = e.target.value; applyTheme(pendingTheme); });
+$('themeBgColor')?.addEventListener('input', e => { pendingTheme.bg = e.target.value; applyTheme(pendingTheme); });
+$('themeReset')?.addEventListener('click', () => { pendingTheme = { ...DEFAULT_THEME }; applyTheme(pendingTheme); });
+$('themeSave')?.addEventListener('click', async () => {
+  if (!sb || !user) return;
+  const btn = $('themeSave'); busy(btn, true, 'Saving…'); $('themeMsg').textContent = '';
+  const { data, error } = await sb.auth.updateUser({ data: { wearhouse_theme: pendingTheme } });
+  if (error) { $('themeMsg').textContent = error.message; }
+  else { user = data.user || user; pendingTheme = applyTheme(user.user_metadata?.wearhouse_theme || pendingTheme); $('themeDialog').close(); toast('Your colors have been saved.'); }
+  busy(btn, false);
+});
+
 function updateAuth() {
+  loadAccountTheme();
+  $('themeBtn')?.classList.toggle('hidden', !user);
   const name = profile?.full_name || user?.email || 'Warehouse';
   if ($('hello')) {
     $('hello').textContent = !user

@@ -18,3 +18,10 @@ No production user roles were changed.
 Deploy to GitHub Pages by uploading these five files to the repository root:
 index.html, app.js, styles.css, config.js and favicon.svg. Commit and hard refresh.
 Do not run SQL migrations again; the database is already updated.
+
+
+PERSONAL COLOR SETTINGS
+- A palette button appears in the header for signed-in users, immediately before the arrow button.
+- Each account can choose one text color and one background color. Changes preview live.
+- Save stores the settings in that user's Supabase Auth metadata, so the colors follow the account across devices.
+- Closing without saving restores that account's previously saved colors.

@@ -169,42 +169,65 @@ async function refreshAuth() {
   updateAuth();
 }
 
-const DEFAULT_THEME = { text: '#f4ffff', bg: '#052a30' };
+const DEFAULT_THEME = { text: '#f4ffff', bg: '#052a30', accent: '#aaffef' };
+const validThemeColor = value => /^#[0-9a-f]{6}$/i.test(value || '');
 let pendingTheme = { ...DEFAULT_THEME };
-function applyTheme(theme) {
+function applyTheme(theme, enabled = true) {
   const safe = {
-    text: /^#[0-9a-f]{6}$/i.test(theme?.text || '') ? theme.text : DEFAULT_THEME.text,
-    bg: /^#[0-9a-f]{6}$/i.test(theme?.bg || '') ? theme.bg : DEFAULT_THEME.bg
+    text: validThemeColor(theme?.text) ? theme.text : DEFAULT_THEME.text,
+    bg: validThemeColor(theme?.bg) ? theme.bg : DEFAULT_THEME.bg,
+    accent: validThemeColor(theme?.accent) ? theme.accent : DEFAULT_THEME.accent
   };
-  document.documentElement.style.setProperty('--ink', safe.text);
-  document.documentElement.style.setProperty('--bg', safe.bg);
+  const root = document.documentElement;
+  if (enabled) {
+    root.style.setProperty('--ink', safe.text);
+    root.style.setProperty('--bg', safe.bg);
+    root.style.setProperty('--accent', safe.accent);
+    root.dataset.customTheme = 'true';
+  } else {
+    ['--ink','--bg','--accent'].forEach(name => root.style.removeProperty(name));
+    delete root.dataset.customTheme;
+  }
   if ($('themeTextColor')) $('themeTextColor').value = safe.text;
   if ($('themeBgColor')) $('themeBgColor').value = safe.bg;
-  if ($('themePreview')) { $('themePreview').style.color = safe.text; $('themePreview').style.backgroundColor = safe.bg; }
+  if ($('themeAccentColor')) $('themeAccentColor').value = safe.accent;
+  if ($('themePreview')) {
+    $('themePreview').style.color = safe.text;
+    $('themePreview').style.backgroundColor = safe.bg;
+    $('themePreview').style.setProperty('--preview-accent', safe.accent);
+  }
   return safe;
 }
 function loadAccountTheme() {
-  const saved = user?.user_metadata?.wearhouse_theme || DEFAULT_THEME;
-  pendingTheme = applyTheme(saved);
+  const saved = user?.user_metadata?.wearhouse_theme;
+  pendingTheme = saved ? applyTheme(saved, true) : applyTheme(DEFAULT_THEME, false);
 }
 function openThemeEditor() {
   if (!user) return;
-  pendingTheme = applyTheme(user.user_metadata?.wearhouse_theme || DEFAULT_THEME);
+  pendingTheme = applyTheme(user.user_metadata?.wearhouse_theme || DEFAULT_THEME, !!user.user_metadata?.wearhouse_theme);
   $('themeMsg').textContent = '';
-  $('themeDialog').showModal();
+  $('themeDialog').show();
 }
 $('themeBtn')?.addEventListener('click', openThemeEditor);
 $('themeClose')?.addEventListener('click', () => $('themeDialog').close());
-$('themeDialog')?.addEventListener('close', () => { pendingTheme = applyTheme(user?.user_metadata?.wearhouse_theme || DEFAULT_THEME); });
-$('themeTextColor')?.addEventListener('input', e => { pendingTheme.text = e.target.value; applyTheme(pendingTheme); });
-$('themeBgColor')?.addEventListener('input', e => { pendingTheme.bg = e.target.value; applyTheme(pendingTheme); });
-$('themeReset')?.addEventListener('click', () => { pendingTheme = { ...DEFAULT_THEME }; applyTheme(pendingTheme); });
+$('themeDialog')?.addEventListener('close', () => loadAccountTheme());
+function previewThemeChange(key, value) {
+  pendingTheme[key] = value;
+  applyTheme(pendingTheme, true);
+}
+$('themeTextColor')?.addEventListener('input', e => previewThemeChange('text', e.target.value));
+$('themeBgColor')?.addEventListener('input', e => previewThemeChange('bg', e.target.value));
+$('themeAccentColor')?.addEventListener('input', e => previewThemeChange('accent', e.target.value));
+$('themeReset')?.addEventListener('click', () => {
+  pendingTheme = { ...DEFAULT_THEME };
+  applyTheme(pendingTheme, true);
+});
 $('themeSave')?.addEventListener('click', async () => {
   if (!sb || !user) return;
   const btn = $('themeSave'); busy(btn, true, 'Saving…'); $('themeMsg').textContent = '';
   const { data, error } = await sb.auth.updateUser({ data: { wearhouse_theme: pendingTheme } });
   if (error) { $('themeMsg').textContent = error.message; }
-  else { user = data.user || user; pendingTheme = applyTheme(user.user_metadata?.wearhouse_theme || pendingTheme); $('themeDialog').close(); toast('Your colors have been saved.'); }
+  else { user = data.user || user; pendingTheme = applyTheme(user.user_metadata?.wearhouse_theme || pendingTheme, true); $('themeDialog').close(); toast('Your colors have been saved.'); }
   busy(btn, false);
 });
 

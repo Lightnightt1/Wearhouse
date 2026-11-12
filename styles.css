@@ -1900,3 +1900,33 @@ html[data-custom-theme="true"] .selected-serials {
     ) !important;
   border-color: color-mix(in srgb, var(--surface) 58%, white 42%);
 }
+
+
+/* Panels / marine color also drives the marine-tinted warehouse pictograms and their glow. */
+html[data-custom-theme="true"] {
+  --surface-icon: color-mix(in srgb, var(--surface) 52%, white 48%);
+  --surface-glow: color-mix(in srgb, var(--surface) 38%, white 62%);
+}
+html[data-custom-theme="true"] .metric-art,
+html[data-custom-theme="true"] .metric-label > .icon,
+html[data-custom-theme="true"] .dashboard-panel-head h2 > .icon,
+html[data-custom-theme="true"] .location-symbol,
+html[data-custom-theme="true"] .location-symbol > .icon,
+html[data-custom-theme="true"] .feed-symbol,
+html[data-custom-theme="true"] .feed-symbol > .icon,
+html[data-custom-theme="true"] .alert-symbol:not(.waiting),
+html[data-custom-theme="true"] .alert-symbol:not(.waiting) > .icon,
+html[data-custom-theme="true"] .system-icon,
+html[data-custom-theme="true"] .system-icon > .icon {
+  color: var(--surface-icon) !important;
+}
+html[data-custom-theme="true"] .metric-art {
+  filter: drop-shadow(0 0 8px var(--surface-glow)) drop-shadow(0 0 20px color-mix(in srgb, var(--surface-glow) 65%, transparent)) !important;
+}
+html[data-custom-theme="true"] .location-symbol,
+html[data-custom-theme="true"] .feed-symbol,
+html[data-custom-theme="true"] .system-icon {
+  background: color-mix(in srgb, var(--surface) 72%, transparent) !important;
+  border-color: color-mix(in srgb, var(--surface-icon) 42%, transparent) !important;
+  box-shadow: inset 0 1px color-mix(in srgb, var(--surface-icon) 20%, transparent), 0 0 14px color-mix(in srgb, var(--surface-glow) 24%, transparent) !important;
+}

@@ -1869,3 +1869,34 @@ html[data-custom-theme="true"] .sidebar nav button.active{
   color:inherit;
 }
 .theme-preview{background:linear-gradient(145deg,color-mix(in srgb,var(--preview-surface,#0b3438) 88%,white 12%),var(--preview-surface,#0b3438))}
+
+
+/* Surface palette coverage: apply the third personal color to all glass content surfaces,
+   including dashboard panels that were previously left on the fixed teal glass gradient. */
+html[data-custom-theme="true"] .glass,
+html[data-custom-theme="true"] .dashboard-panel,
+html[data-custom-theme="true"] .dashboard-left-column > section,
+html[data-custom-theme="true"] .dashboard-right-column > section,
+html[data-custom-theme="true"] .sidebar,
+html[data-custom-theme="true"] .sidebar-system,
+html[data-custom-theme="true"] .location-card,
+html[data-custom-theme="true"] .dashboard-kpi,
+html[data-custom-theme="true"] .panel,
+html[data-custom-theme="true"] .stat,
+html[data-custom-theme="true"] .product,
+html[data-custom-theme="true"] .delivery-card,
+html[data-custom-theme="true"] .activity-card,
+html[data-custom-theme="true"] .recent-activity,
+html[data-custom-theme="true"] .alert-card,
+html[data-custom-theme="true"] .unit-card,
+html[data-custom-theme="true"] .delivery-item-preview,
+html[data-custom-theme="true"] .serial-autocomplete,
+html[data-custom-theme="true"] .selected-serials {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--surface) 88%, white 12%),
+      color-mix(in srgb, var(--surface) 96%, transparent)
+    ) !important;
+  border-color: color-mix(in srgb, var(--surface) 58%, white 42%);
+}

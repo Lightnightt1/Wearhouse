@@ -13,6 +13,7 @@ const sb = configured && window.supabase
 let products = [];
 let activities = [];
 let profiles = [];
+const SITE_OWNER_ID = '86377fb6-03b1-4066-a3f6-b55133f3350a';
 let serials = [];
 let deliveryRequests = [];
 let warehouseOrders = [];
@@ -163,9 +164,8 @@ async function refreshAuth() {
     sb.from('profiles').select('*').eq('id', user.id).maybeSingle()
   ]);
 
-  isAdmin = !adminRow.error && !!adminRow.data;
   profile = profileRow.error ? null : profileRow.data;
-  if (profile?.role === 'admin') isAdmin = true;
+  isAdmin = !adminRow.error && !!adminRow.data && profile?.role === 'admin' && profile?.active === true;
   updateAuth();
 }
 
@@ -240,7 +240,7 @@ async function loadAll() {
 
   if (isAdmin) {
     const [pr, sr, dr, nt] = await Promise.all([
-      sb.from('profiles').select('*').eq('role', 'delivery_guy').order('created_at', { ascending: false }),
+      sb.from('profiles').select('*').order('created_at', { ascending: false }),
       sb.from('inventory_units').select('*, products(name, location, image_url)').order('created_at', { ascending: false }),
       sb.from('delivery_requests').select('*, products(name, location, image_url), inventory_units(serial_number, status)').order('created_at', { ascending: false }),
       notificationQuery
@@ -300,11 +300,11 @@ function renderSetup() {
 }
 
 function render() {
-  document.querySelectorAll('.sidebar nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.page === currentPage));
   updateAuth();
 
-  if (!isAdmin && ['users', 'serials'].includes(currentPage)) currentPage = 'dashboard';
-  if (!isStaff() && currentPage === 'deliveries') currentPage = 'admin';
+  if (!isAdmin && ['admin', 'users', 'serials'].includes(currentPage)) currentPage = isDelivery() ? 'deliveries' : 'dashboard';
+  if (!isStaff() && currentPage === 'deliveries') currentPage = 'dashboard';
+  document.querySelectorAll('.sidebar nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.page === currentPage));
   if (!user && currentPage === 'notifications') currentPage = 'dashboard';
 
   if (currentPage === 'dashboard') dashboard();
@@ -483,28 +483,66 @@ function activity() {
 
 function admin() {
   if (!isAdmin) {
-    if (isDelivery()) {
-      view.innerHTML = `<section class="hero"><span class="eyebrow">DELIVERY ACCOUNT</span><h1>Your<br><em>workspace.</em></h1><p>Select the serialized items you are delivering, then upload photos and your delivery note for manager confirmation.</p><button class="primary" onclick="go('deliveries')">Open deliveries →</button></section>`;
-      return;
-    }
-    if (user) {
-      view.innerHTML = `<section class="hero"><span class="eyebrow">PRIVATE AREA</span><h1>Not<br><em>authorized.</em></h1><p>This account is not an active warehouse staff account.</p><button class="ghost" onclick="document.getElementById('logout').click()">Sign out</button></section>`;
-      return;
-    }
-    view.innerHTML = `<section class="hero"><span class="eyebrow">STAFF AREA</span><h1>Warehouse<br><em>access.</em></h1><p>Administrators and delivery staff can sign in here.</p><button class="primary" onclick="loginDialog.showModal()">Sign in <span>→</span></button></section>`;
+    if (isDelivery()) return deliveries();
+    view.innerHTML = `<section class="hero"><span class="eyebrow">WAREHOUSE ACCESS</span><h1>Team access.<br><em>Protected.</em></h1><p>Sign in with an administrator account to manage people and roles.</p><button class="primary" onclick="loginDialog.showModal()">Sign in</button></section>`;
     return;
   }
-
-  const pending = deliveryRequests.filter(r => r.status === 'pending_admin_approval').length;
-  const noteReady = deliveryRequests.filter(r => r.status === 'delivery_note_submitted').length;
+  const list = [...profiles].sort((a,b) => (a.role==='admin'?0:1)-(b.role==='admin'?0:1) || (a.full_name||a.email||'').localeCompare(b.full_name||b.email||''));
+  const admins = list.filter(p => p.role==='admin' && p.active).length;
+  const staff = list.filter(p => p.role==='delivery_guy' && p.active).length;
+  const disabled = list.filter(p => p.active===false).length;
   view.innerHTML = `
-    <section class="hero compact"><span class="eyebrow">ADMIN · ${esc(user.email || '')}</span><h1>Control the<br><em>warehouse.</em></h1><p>Add inventory, maintain serialized units, manage employees and review delivery evidence.</p><div class="hero-actions"><button class="primary" onclick="openAdd()">＋ Add item</button><button class="ghost" onclick="go('deliveries')">Deliveries ${pending + noteReady ? `· ${pending + noteReady}` : ''} →</button><button class="ghost" onclick="go('serials')">Serials →</button></div></section>
-    <section class="panel glass"><div class="head"><div><small class="section-label">MANAGEMENT</small><h2>Inventory</h2></div><span class="pill">${products.length} items</span></div>${products.map(p => `<div class="item admin-row"><img class="thumb" src="${safeImg(p.image_url)}" onerror="this.src='${fallback}'"><div class="itemmain"><b>${esc(p.name)}</b><span>${Number(p.quantity || 0)} pcs · ${esc(p.location)} · ${esc(p.category)}</span></div><button class="smallbtn" onclick="editProduct('${p.id}')">✎ Edit</button><button class="smallbtn danger" onclick="deleteProduct('${p.id}')">× Delete</button></div>`).join('') || empty('No items yet', 'Add your first item above.')}</section>`;
+    <section class="hero compact"><span class="eyebrow">ADMIN · ACCESS CONTROL</span><h1>Users &amp;<br><em>roles.</em></h1>
+      <p>Manage who can access the Wearhouse site. Give a member Admin or Staff permissions, or disable access.</p>
+      <div class="hero-actions"><button class="primary" onclick="deliveryUserDialog.showModal()">＋ Add staff account</button><button class="ghost" onclick="go('inventory')">Manage inventory →</button></div>
+    </section>
+    <section class="stats member-stats"><div class="stat glass"><small>Site members</small><b>${list.length}</b><span>Wearhouse accounts</span></div><div class="stat glass"><small>Administrators</small><b>${admins}</b><span>Full management access</span></div><div class="stat glass"><small>Delivery staff</small><b>${staff}</b><span>Assigned deliveries</span></div><div class="stat glass"><small>Disabled</small><b>${disabled}</b><span>Access blocked</span></div></section>
+    <section class="panel glass member-panel"><div class="head wrap"><div><small class="section-label">USER MANAGEMENT</small><h2>Staff / Admin</h2><p class="member-help">Change a member's role or disable their access. Your owner account is protected.</p></div><span class="pill">${list.length} accounts</span></div>
+      <div class="member-list">${list.map(p => {
+        const owner = p.id===SITE_OWNER_ID;
+        const self = p.id===user?.id;
+        const locked = owner || self;
+        return `<article class="member-row glass">
+          <span class="member-avatar">${esc((p.full_name||p.email||'?').slice(0,1).toUpperCase())}</span>
+          <div class="member-info"><strong>${esc(p.full_name||'Unnamed user')} ${owner?'<span class="member-owner">Owner</span>':self?'<span class="member-owner">You</span>':''}</strong><span>${esc(p.email||'—')}</span><small class="member-status ${p.active?'enabled':'disabled'}">${p.active?'● Active':'● Disabled'}</small></div>
+          <label class="member-role-label">Role<select id="role-${p.id}" aria-label="Role for ${esc(p.full_name||p.email||'member')}" ${locked?'disabled':''}>
+            <option value="admin" ${p.role==='admin'?'selected':''}>Admin</option><option value="delivery_guy" ${p.role==='delivery_guy'?'selected':''}>Staff / Delivery</option>
+          </select></label>
+          <div class="member-actions">${locked?`<span class="pill member-protected">${owner?'Owner protected':'Own account'}</span>`:
+          `<button class="smallbtn" onclick="saveMemberRole('${p.id}')">Save role</button><button class="smallbtn ${p.active?'danger':''}" onclick="toggleMemberActive('${p.id}')">${p.active?'Disable':'Enable'}</button>`}</div>
+        </article>`;
+      }).join('')||empty('No members yet','Add a delivery staff account to get started.')}</div>
+    </section>`;
 }
 
-function adminUsers() {
-  if (!isAdmin) return admin();
-  view.innerHTML = `<section class="hero compact"><span class="eyebrow">ADMIN · TEAM</span><h1>Delivery<br><em>accounts.</em></h1><p>Create and control delivery accounts.</p><div class="hero-actions"><button class="primary" onclick="deliveryUserDialog.showModal()">＋ Add delivery guy</button></div></section><section class="panel glass"><div class="head"><div><small class="section-label">DELIVERY TEAM</small><h2>Delivery guys</h2></div><span class="pill">${profiles.length} accounts</span></div>${profiles.map(p => `<div class="item admin-row"><div class="avatar small-avatar">${esc((p.full_name || p.email || 'D').slice(0, 1).toUpperCase())}</div><div class="itemmain"><b>${esc(p.full_name || 'Unnamed')}</b><span>${esc(p.email || 'No email saved')} · ${p.active === false ? 'Disabled' : 'Active'}</span></div><button class="smallbtn ${p.active === false ? '' : 'danger'}" onclick="setDeliveryUserActive('${p.id}', ${p.active === false})">${p.active === false ? 'Enable' : 'Disable'}</button></div>`).join('') || empty('No delivery accounts yet', 'Create your first delivery guy above.')}</section>`;
+// Staff / Admin is the single permissions page. Existing deep links remain supported.
+function adminUsers() { return admin(); }
+
+async function updateMemberAccess(member, nextRole, nextActive) {
+  if (!isAdmin || !member) return;
+  if (member.id===SITE_OWNER_ID || member.id===user?.id) return toast('This administrator account is protected.', 'error');
+  const nextLabel = nextRole==='admin'?'Admin':'Staff / Delivery';
+  const action = member.role!==nextRole ? `change ${member.full_name||member.email} to ${nextLabel}` : `${nextActive?'enable':'disable'} ${member.full_name||member.email}`;
+  if (!confirm(`Are you sure you want to ${action}?`)) return;
+  const {error}=await sb.rpc('warehouse_set_member_access', {p_member_id:member.id,p_role:nextRole,p_active:nextActive});
+  if (error) return toast(error.message||'Could not update user access.', 'error');
+  toast('User access updated.');
+  await loadAll();
+  render();
+}
+
+async function saveMemberRole(id) {
+  const member=profiles.find(p=>p.id===id);
+  const role=$(`role-${id}`)?.value;
+  if (!member || !['admin','delivery_guy'].includes(role)) return;
+  if (role===member.role) return toast('This user already has that role.');
+  await updateMemberAccess(member,role,member.active);
+}
+
+async function toggleMemberActive(id) {
+  const member=profiles.find(p=>p.id===id);
+  if (!member) return;
+  await updateMemberAccess(member,member.role,!member.active);
 }
 
 function serialManager() {
@@ -833,12 +871,9 @@ async function createDeliveryUser(e) {
 }
 
 async function setDeliveryUserActive(id, active) {
-  if (!isAdmin || !id) return;
-  const { error } = await sb.from('profiles').update({ active }).eq('id', id).eq('role', 'delivery_guy');
-  if (error) return toast(error.message, 'error');
-  toast(active ? 'Delivery account enabled.' : 'Delivery account disabled.');
-  await loadAll();
-  render();
+  const member=profiles.find(p=>p.id===id && p.role==='delivery_guy');
+  if (!member || !isAdmin) return;
+  await updateMemberAccess(member,'delivery_guy',active);
 }
 
 function openSerialDialog() {
@@ -1307,7 +1342,7 @@ $('productForm').onsubmit = async e => {
 
     productDialog.close();
     await loadAll();
-    currentPage = 'admin';
+    currentPage = 'inventory';
     render();
   } catch (err) {
     console.error('Save product failed:', err);

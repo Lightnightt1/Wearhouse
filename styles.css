@@ -1798,3 +1798,23 @@ body{font-feature-settings:"cv11","ss01";letter-spacing:-.01em}
 .edit-serial-add:hover{background:rgba(109,238,216,.2)!important}
 #editSerialStatus{color:#bffaf1!important;font-size:10px!important;line-height:1.4!important}
 @media(max-width:520px){.edit-serial-lock{flex-basis:100%;padding-left:30px}.edit-serial-row.protected{gap:5px}}
+
+/* USER ROLES: real Wearhouse member management (glass theme preserved) */
+.member-panel{margin-top:18px}
+.member-help{margin:8px 0 0;color:#b5d8d8;font-size:12px;line-height:1.55;max-width:590px}
+.member-list{display:grid;gap:12px;margin-top:19px}
+.member-row{display:grid;grid-template-columns:50px minmax(170px,1fr) minmax(162px,185px) auto;align-items:center;gap:16px;padding:18px 17px;border:1px solid rgba(191,255,246,.26);border-radius:18px;background:linear-gradient(120deg,rgba(141,237,229,.09),rgba(9,45,52,.18));box-shadow:inset 0 1px 0 rgba(237,255,251,.10)}
+.member-avatar{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(140deg,rgba(177,255,247,.35),rgba(36,100,105,.38));border:1px solid rgba(208,255,251,.29);color:#eafffc;font-weight:700;font-size:20px}
+.member-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.member-info strong{font-size:15px;color:#f1fffd;overflow-wrap:anywhere}
+.member-info>span{color:#c5dfe0;font-size:12px;overflow-wrap:anywhere}
+.member-status{font-size:11px;font-weight:650;margin-top:3px}.member-status.enabled{color:#9cf6d7}.member-status.disabled{color:#ffb3b3}
+.member-owner{padding:3px 7px;margin-left:5px;border-radius:50px;font-size:10px;vertical-align:middle;white-space:nowrap;border:1px solid rgba(182,255,240,.28);color:#befff2;background:rgba(132,232,212,.14)}
+.member-role-label{display:flex;flex-direction:column;gap:6px;color:#b9dbd9;font-size:11px;font-weight:600}
+.member-role-label select{width:100%;min-height:39px;padding:9px 11px!important;margin:0!important;border-radius:11px!important;font-size:12px;background-color:#063b42;color:#f2fffe;border:1px solid rgba(177,255,248,.35)}
+.member-role-label select:disabled{opacity:.67;cursor:not-allowed}
+.member-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.member-actions .smallbtn{white-space:nowrap;min-width:70px;padding:10px 11px}
+.member-protected{white-space:nowrap}
+@media(max-width:1120px){.member-row{grid-template-columns:46px 1fr minmax(145px,180px)}.member-actions{grid-column:2 / -1;justify-content:flex-start}}
+@media(max-width:700px){.member-row{grid-template-columns:43px minmax(0,1fr);gap:9px 12px;padding:14px 12px}.member-avatar{width:41px;height:41px}.member-info strong{font-size:13px}.member-role-label{grid-column:1 / -1;margin-top:7px}.member-actions{grid-column:1 / -1;width:100%;margin-top:3px}.member-actions .smallbtn{flex:1}.member-help{font-size:11px}}

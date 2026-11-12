@@ -1,28 +1,20 @@
-WEARHOUSE — INVENTORY EDITOR UPDATE
+WEARHOUSE — USERS & ROLES PAGE + INVENTORY GRID FIX
 
-New: Edit item allows administrators to edit the product and manage its serial numbers
-within the SAME edit dialog. Quantity updates to reflect serialized physical stock.
+The Staff / Admin page now manages Wearhouse site accounts.
+- List all Wearhouse member profiles (admins and delivery staff).
+- Change a member between Admin and Staff / Delivery.
+- Enable / disable accounts.
+- Add staff account from the same page (existing secure Edge Function).
+- Site owner and your own admin account cannot be demoted/disabled from this interface.
+- Members with open deliveries cannot be disabled or promoted until the orders are resolved.
+- Non-Wearhouse users in the shared Supabase Trade project are not listed.
+- Saving inventory edits returns to the LARGE INVENTORY CARDS instead of the vertical Staff/Admin list.
+- Original teal glassmorphism style is unchanged.
 
-- Change product quantity: increasing quantity adds serial input fields.
-  Each new physical unit MUST have its own serial number.
-- To reduce quantity, remove the exact unused serials with the × buttons.
-- Existing unused serials can be renamed.
-- Serial numbers with delivery history, or reserved/out/delivered serials,
-  are protected and shown as read-only to preserve audit records.
-- Serial edits, quantity and product details are saved in one transaction.
-- Existing glassmorphism theme and delivery-order workflows are unchanged.
+The backend RPC warehouse_set_member_access and permissions changes have already
+been applied to the connected Supabase Trade project and tested in rollback-only transactions.
+No production user roles were changed.
 
-DATABASE
-The new manager-only Supabase function admin_update_product_and_serials is ALREADY
-installed in the connected Trade database and verified. You do NOT need to
-run the migration file when publishing this zip.
-
-DEPLOY TO GITHUB PAGES
-1. Extract this ZIP archive.
-2. Replace these files at the Wearhouse GitHub repository root:
-   index.html, app.js, styles.css, config.js, favicon.svg
-3. Commit changes.
-4. Refresh the Wearhouse website (Ctrl+F5 if needed).
-
-Important: keep all serials associated with deliveries intact.
-No inventory or delivery data was changed during the test; test DB transactions rolled back.
+Deploy to GitHub Pages by uploading these five files to the repository root:
+index.html, app.js, styles.css, config.js and favicon.svg. Commit and hard refresh.
+Do not run SQL migrations again; the database is already updated.

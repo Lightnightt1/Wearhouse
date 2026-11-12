@@ -185,15 +185,17 @@ function applyTheme(theme, enabled = true) {
   const safe = normalizeTheme(theme);
   const root = document.documentElement;
   if (enabled) {
-    root.style.setProperty('--ink', safe.text);
-    root.style.setProperty('--bg', safe.bg);
-    root.style.setProperty('--glow', safe.glow);
+    root.style.setProperty('--text-color', safe.text);
+    root.style.setProperty('--bg-color', safe.bg);
+    root.style.setProperty('--glow-color', safe.glow);
     root.style.setProperty('--logo-color', safe.logos);
     root.dataset.customTheme = 'true';
   } else {
-    ['--ink','--bg','--glow','--logo-color'].forEach(name => root.style.removeProperty(name));
+    ['--text-color', '--bg-color', '--glow-color', '--logo-color', '--ink', '--bg', '--glow'].forEach(name => root.style.removeProperty(name));
     delete root.dataset.customTheme;
   }
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.setAttribute('content', safe.bg);
   if ($('themeTextColor')) $('themeTextColor').value = safe.text;
   if ($('themeBgColor')) $('themeBgColor').value = safe.bg;
   if ($('themeAccentColor')) $('themeAccentColor').value = safe.glow;
@@ -440,21 +442,21 @@ function dashboardActivityChart() {
   const gridY=Array.from({length:5},(_,i)=>{
     const y=y0+(y1-y0)*i/4;
     const v=Math.round(ymax*(4-i)/4);
-    return `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="rgba(193,255,251,.1)"/><text x="${x0-10}" y="${y+4}" text-anchor="end">${v}</text>`;
+    return `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="var(--glow-faint)"/><text x="${x0-10}" y="${y+4}" text-anchor="end">${v}</text>`;
   }).join('');
   const dateLabel = index => days[index].day.toLocaleDateString('en',{month:'short',day:'numeric'});
   const gridX=[0,5,10,15,20,25,29].map(i=>{
     const x=pts[i].x;
-    return `<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" stroke="rgba(193,255,251,.06)"/><text x="${x}" y="208" text-anchor="middle">${dateLabel(i)}</text>`;
+    return `<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}" stroke="var(--glow-faint)"/><text x="${x}" y="208" text-anchor="middle">${dateLabel(i)}</text>`;
   }).join('');
   const maxIndex=values.indexOf(Math.max(...values));
   return {totalEvents,markup:`<svg class="trend-chart" viewBox="0 0 760 225" role="img" aria-label="Daily recorded inventory changes over the last 30 days">
-    <defs><linearGradient id="activityArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--glow)" stop-opacity=".52"/><stop offset="1" stop-color="var(--glow)" stop-opacity=".025"/></linearGradient><filter id="trendGlow"><feGaussianBlur stdDeviation="3"/></filter></defs>
+    <defs><linearGradient id="activityArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--glow-color)" stop-opacity=".52"/><stop offset="1" stop-color="var(--glow-color)" stop-opacity=".025"/></linearGradient><filter id="trendGlow"><feGaussianBlur stdDeviation="3"/></filter></defs>
     <g class="chart-grid">${gridY}${gridX}</g>
     <path d="${area}" fill="url(#activityArea)"/>
-    <path d="${curve}" fill="none" stroke="var(--glow)" stroke-width="6" opacity=".4" filter="url(#trendGlow)"/>
-    <path d="${curve}" fill="none" stroke="var(--glow)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
-    ${totalEvents?`<circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="11" fill="var(--glow)" fill-opacity=".2"/><circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="5.5" fill="var(--glow)"/>`:''}
+    <path d="${curve}" fill="none" stroke="var(--glow-color)" stroke-width="6" opacity=".4" filter="url(#trendGlow)"/>
+    <path d="${curve}" fill="none" stroke="var(--glow-color)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+    ${totalEvents?`<circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="11" fill="var(--glow-color)" fill-opacity=".2"/><circle cx="${pts[maxIndex].x}" cy="${pts[maxIndex].y}" r="5.5" fill="var(--glow-color)"/>`:''}
   </svg>`};
 }
 

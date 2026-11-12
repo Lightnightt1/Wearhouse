@@ -1820,63 +1820,430 @@ body{font-feature-settings:"cv11","ss01";letter-spacing:-.01em}
 @media(max-width:700px){.member-row{grid-template-columns:43px minmax(0,1fr);gap:9px 12px;padding:14px 12px}.member-avatar{width:41px;height:41px}.member-info strong{font-size:13px}.member-role-label{grid-column:1 / -1;margin-top:7px}.member-actions{grid-column:1 / -1;width:100%;margin-top:3px}.member-actions .smallbtn{flex:1}.member-help{font-size:11px}}
 
 
-/* Personal appearance: four independent controls — text, page background, glow, logos/icons. */
-html,body{background:var(--bg)!important;color:var(--ink)}
-.bg{background:radial-gradient(ellipse 62% 60% at 96% 72%,color-mix(in srgb,var(--glow,#aaffef) 9%,transparent),transparent 78%),radial-gradient(ellipse 52% 67% at 23% 28%,color-mix(in srgb,var(--glow,#aaffef) 7%,transparent),transparent 80%),var(--bg)!important}
-.theme-modal{width:min(370px,calc(100vw - 24px));padding:22px;position:fixed;inset:78px 22px auto auto;margin:0;max-height:calc(100dvh - 96px);overflow:auto;z-index:1200;box-shadow:0 18px 55px rgba(0,0,0,.34);background:rgba(7,38,43,.96)!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
-#themeDialog{position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;border:0;padding:0;margin:0;background:transparent;overflow:visible;pointer-events:none}
-#themeDialog[open]{display:block}
-#themeDialog .theme-modal{pointer-events:auto}
-#themeDialog::backdrop{background:transparent!important;backdrop-filter:none!important}
-.theme-help{color:var(--muted);line-height:1.5}
-.theme-fields{display:grid;grid-template-columns:1fr;gap:12px;margin:18px 0}
-.theme-field{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;font-weight:650}
-.theme-field input{width:64px;height:40px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--glass);cursor:pointer}
-.theme-preview{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid color-mix(in srgb,var(--ink) 24%,transparent);border-radius:16px;background:color-mix(in srgb,var(--bg) 92%,white 8%);color:var(--ink)}
-.theme-preview span{opacity:.8}
-.theme-preview .theme-preview-icons{color:var(--preview-logo,#aaffef);filter:drop-shadow(0 0 7px var(--preview-glow,#aaffef))}
-.theme-preview button{align-self:flex-start;padding:9px 14px;border:1px solid var(--preview-glow,#aaffef);border-radius:10px;background:color-mix(in srgb,var(--preview-glow,#aaffef) 22%,transparent);color:var(--ink)}
-.theme-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
-.theme-tool{display:inline-flex!important}
-body :is(h1,h2,h3,h4,p,span,strong,b,small,label,a,td,th,li,summary){color:var(--ink)}
-body input,body textarea,body select{color:var(--ink)}
-body input::placeholder,body textarea::placeholder{color:color-mix(in srgb,var(--ink) 58%,transparent)}
-@media(max-width:600px){.theme-modal{inset:70px 10px auto auto;width:min(340px,calc(100vw - 20px));padding:18px;max-height:calc(100dvh - 82px)}}
+/* ==========================================================================
+   Personal appearance: Four strictly independent CSS color variables
+   1. --text-color : All primary, secondary, muted, input, and chart text
+   2. --bg-color   : Page background, glass cards, sidebar/nav, modals, inputs
+   3. --glow-color : Ambient orbs/light, glowing borders, neon shadows, accents
+   4. --logo-color : All SVG icons, brand marks, and symbol glyphs only
+   ========================================================================== */
+:root {
+  --text-color: #f4ffff;
+  --bg-color: #052a30;
+  --glow-color: #aaffef;
+  --logo-color: #aaffef;
 
-/* Option 3 — GLOW ONLY. This affects neon light and glow, not the actual icon pigment. */
-html[data-custom-theme="true"] .bg{
-  background:radial-gradient(ellipse 62% 60% at 96% 72%,color-mix(in srgb,var(--glow) 9%,transparent),transparent 78%),radial-gradient(ellipse 52% 67% at 23% 28%,color-mix(in srgb,var(--glow) 7%,transparent),transparent 80%),var(--bg)!important;
-}
-html[data-custom-theme="true"] .metric-art,
-html[data-custom-theme="true"] .brand-bell,
-html[data-custom-theme="true"] .system-icon,
-html[data-custom-theme="true"] .location-symbol,
-html[data-custom-theme="true"] .feed-symbol,
-html[data-custom-theme="true"] .alert-symbol:not(.waiting){
-  filter:drop-shadow(0 0 7px var(--glow)) drop-shadow(0 0 18px var(--glow))!important;
-}
-html[data-custom-theme="true"] .location-symbol,
-html[data-custom-theme="true"] .feed-symbol,
-html[data-custom-theme="true"] .system-icon{
-  box-shadow:inset 0 1px color-mix(in srgb,var(--glow) 20%,transparent),0 0 14px color-mix(in srgb,var(--glow) 30%,transparent)!important;
-}
-html[data-custom-theme="true"] .trend-chart path[filter],
-html[data-custom-theme="true"] .trend-chart path:not([fill]),
-html[data-custom-theme="true"] .trend-chart circle{stroke:var(--glow)!important;fill:var(--glow)!important}
+  /* Single-source derived tokens (each derived strictly from its own variable) */
+  --text-muted: color-mix(in srgb, var(--text-color) 68%, transparent);
+  --text-soft: color-mix(in srgb, var(--text-color) 48%, transparent);
+  --bg-surface: color-mix(in srgb, var(--bg-color) 76%, rgba(255, 255, 255, 0.12));
+  --bg-elevated: color-mix(in srgb, var(--bg-color) 94%, black 6%);
+  --bg-input: color-mix(in srgb, var(--bg-color) 82%, black 18%);
+  --glow-strong: color-mix(in srgb, var(--glow-color) 62%, transparent);
+  --glow-line: color-mix(in srgb, var(--glow-color) 32%, transparent);
+  --glow-soft: color-mix(in srgb, var(--glow-color) 18%, transparent);
+  --glow-faint: color-mix(in srgb, var(--glow-color) 10%, transparent);
 
-/* Option 4 — LOGOS / ICONS ONLY. It changes icon color, not their glow or any surfaces. */
-html[data-custom-theme="true"] .brand-bell,
-html[data-custom-theme="true"] .system-icon .icon,
-html[data-custom-theme="true"] .metric-art,
-html[data-custom-theme="true"] .metric-label>.icon,
-html[data-custom-theme="true"] .dashboard-panel-head h2>.icon,
-html[data-custom-theme="true"] .location-symbol,
-html[data-custom-theme="true"] .location-symbol>.icon,
-html[data-custom-theme="true"] .feed-symbol,
-html[data-custom-theme="true"] .feed-symbol>.icon,
-html[data-custom-theme="true"] .alert-symbol:not(.waiting),
-html[data-custom-theme="true"] .alert-symbol:not(.waiting)>.icon,
-html[data-custom-theme="true"] .system-icon,
-html[data-custom-theme="true"] .sidebar nav button>.icon{
-  color:var(--logo-color)!important;
+  /* Legacy aliases mapped strictly to their respective single variable */
+  --ink: var(--text-color);
+  --muted: var(--text-muted);
+  --bg: var(--bg-color);
+  --glow: var(--glow-color);
+  --accent: var(--glow-color);
+  --line: var(--glow-line);
+  --glass: var(--bg-surface);
+  --glass2: color-mix(in srgb, var(--bg-color) 68%, rgba(255, 255, 255, 0.16));
+}
+
+/* --------------------------------------------------------------------------
+   1. TEXT (--text-color) — Primary & Secondary Typography Only
+   -------------------------------------------------------------------------- */
+html, body {
+  color: var(--text-color) !important;
+}
+
+body :is(h1, h2, h3, h4, p, span, strong, b, small, label, a, td, th, li, summary, time),
+.brand, .brand-name, .header strong, .metric-label, .metric-count,
+.dashboard-panel-head h2, .dashboard-panel-link, .chart-window,
+.location-info h3, .location-share, .location-share strong, .location-metrics b,
+.feed-body b, .dashboard-alert-row, .dashboard-alert-row b,
+.member-info strong, .edit-serial-title strong, .serial-option,
+.unit-card, .notification-button, .close {
+  color: var(--text-color);
+}
+
+.brand em, .brand-caption, .header small, .eyebrow, .section-label,
+.hero p, .dashboard-welcome p, .metric-caption:not(.metric-warning),
+.trend-panel p, .location-info span, .location-metrics span,
+.feed-body small, .dashboard-feed-row time, .dashboard-alert-row small,
+.stat small, .stat span, .muted, .itemmain span, .product-meta, .product p,
+.timeline-row p, .timeline-row time, .modal p, .modal label, .field-note,
+.member-help, .member-info > span, .member-role-label,
+.edit-serial-tag, .edit-serial-lock, #editSerialStatus,
+.live-caption, .system-top small, .delivery-grid small, .delivery-copy:not(.rejected-copy),
+.notification-row span, .notification-row time, .unit-card small,
+.serial-option span, .serial-option-empty, .theme-help {
+  color: var(--text-muted) !important;
+}
+
+.chart-grid text {
+  fill: var(--text-muted) !important;
+}
+
+body input, body textarea, body select,
+.modal input, .modal textarea, .modal select,
+.search, .filters select, .member-role-label select {
+  color: var(--text-color) !important;
+}
+
+body input::placeholder, body textarea::placeholder, .search::placeholder {
+  color: var(--text-soft) !important;
+}
+
+/* --------------------------------------------------------------------------
+   2. BACKGROUND (--bg-color) — Page, Glass Surfaces, Modals & Inputs Only
+   -------------------------------------------------------------------------- */
+html, body {
+  background: var(--bg-color) !important;
+}
+
+.bg {
+  background:
+    radial-gradient(ellipse 62% 60% at 96% 72%, var(--glow-soft), transparent 78%),
+    radial-gradient(ellipse 52% 67% at 23% 28%, var(--glow-faint), transparent 80%),
+    radial-gradient(ellipse 72% 55% at 50% 0%, color-mix(in srgb, var(--bg-color) 85%, black 15%), transparent 78%),
+    var(--bg-color) !important;
+}
+
+.glass,
+.panel, .product, .stat, .dashboard-kpi, .dashboard-panel, .sidebar, .sidebar-system {
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--bg-color) 72%, rgba(255, 255, 255, 0.14)),
+    color-mix(in srgb, var(--bg-color) 84%, rgba(255, 255, 255, 0.06)) 58%,
+    color-mix(in srgb, var(--bg-color) 76%, rgba(255, 255, 255, 0.11))
+  ) !important;
+}
+
+.location-card, .delivery-card, .member-row {
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--bg-color) 78%, rgba(255, 255, 255, 0.11)),
+    color-mix(in srgb, var(--bg-color) 88%, rgba(255, 255, 255, 0.04))
+  ) !important;
+}
+
+.delivery-grid div, .unit-card, .delivery-item-preview, .selected-serials, .edit-serial-editor {
+  background: color-mix(in srgb, var(--bg-color) 84%, rgba(255, 255, 255, 0.06)) !important;
+}
+
+.modal, .theme-modal, .serial-autocomplete {
+  background: var(--bg-elevated) !important;
+}
+
+.modal input, .modal textarea, .modal select,
+.search, .filters select, .filters select option, .member-role-label select,
+.image-label {
+  background: var(--bg-input) !important;
+}
+
+/* --------------------------------------------------------------------------
+   3. GLOW (--glow-color) — Ambient Orbs, Borders, Shadows, Chart & Accents
+   -------------------------------------------------------------------------- */
+.orb-a, .orb-b {
+  background: var(--glow-color) !important;
+}
+
+.dashboard-kpi::after {
+  background: var(--glow-soft) !important;
+}
+
+.glass, .panel, .product, .stat, .dashboard-kpi, .dashboard-panel,
+.location-card, .delivery-card, .member-row, .modal, .theme-modal,
+.delivery-grid div, .unit-card, .delivery-item-preview,
+.serial-autocomplete, .selected-serials, .edit-serial-editor {
+  border-color: var(--glow-line) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 0 24px var(--glow-faint),
+    0 14px 42px rgba(0, 0, 0, 0.24) !important;
+}
+
+.sidebar {
+  border-color: var(--glow-line) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 0 32px var(--glow-soft),
+    0 16px 44px rgba(0, 0, 0, 0.35) !important;
+}
+
+.sidebar nav button:hover,
+.sidebar nav button.active {
+  background: linear-gradient(125deg, var(--glow-soft), var(--glow-faint)) !important;
+  border-color: var(--glow-line) !important;
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.25),
+    0 0 16px var(--glow-soft),
+    0 7px 16px rgba(0, 0, 0, 0.28) !important;
+  color: var(--text-color) !important;
+}
+
+.primary,
+.glass-action.primary-action,
+.tool-brand {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--glow-color) 32%, transparent), color-mix(in srgb, var(--glow-color) 18%, transparent)) !important;
+  border: 1px solid var(--glow-line) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.22), 0 0 22px var(--glow-soft) !important;
+  color: var(--text-color) !important;
+}
+
+.primary:hover,
+.glass-action.primary-action:hover,
+.tool-brand:hover {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--glow-color) 42%, transparent), color-mix(in srgb, var(--glow-color) 24%, transparent)) !important;
+  border-color: var(--glow-strong) !important;
+  box-shadow: 0 0 26px var(--glow-soft), 0 10px 26px rgba(0, 0, 0, 0.3) !important;
+}
+
+.glass-action, .ghost, .secondary, .smallbtn:not(.danger), .logout,
+.tool, .profile-trigger, .chart-window, .pill, .badge:not(.low),
+.edit-serial-add, .member-owner {
+  background: var(--glow-faint) !important;
+  border: 1px solid var(--glow-line) !important;
+  color: var(--text-color) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.14), 0 3px 12px rgba(0, 0, 0, 0.16) !important;
+}
+
+.glass-action:hover, .ghost:hover, .secondary:hover, .smallbtn:not(.danger):hover, .logout:hover,
+.tool:hover, .profile-trigger:hover, .edit-serial-add:hover,
+.notification-button:hover, .unit-card:hover, .serial-option:hover, .serial-option:focus {
+  background: var(--glow-soft) !important;
+  border-color: var(--glow-strong) !important;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.2), 0 0 16px var(--glow-soft) !important;
+}
+
+.avatar, .member-avatar {
+  background: linear-gradient(135deg, var(--glow-soft), var(--glow-faint)) !important;
+  border: 2px solid var(--glow-line) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 0 14px var(--glow-soft) !important;
+}
+
+.notification-badge, .toast:not(.error) {
+  background: var(--glow-color) !important;
+  color: var(--bg-color) !important;
+  border-color: var(--bg-color) !important;
+}
+
+.tool-separator, .system-live, .dashboard-feed-row, .dashboard-alert-row,
+.location-metrics div, .edit-serial-row, .serial-option, .serial-selected,
+.warehouse-line, .item, .timeline-row, .health-row, .healthy, .notification-row {
+  border-color: var(--glow-faint) !important;
+}
+
+.trend-summary span {
+  background: var(--glow-soft) !important;
+  border: 1px solid var(--glow-line) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 0 14px var(--glow-faint) !important;
+}
+
+.location-bar {
+  background: var(--glow-faint) !important;
+}
+
+.location-bar i {
+  background: linear-gradient(90deg, var(--glow-color), var(--glow-strong)) !important;
+  box-shadow: 0 0 13px var(--glow-soft) !important;
+}
+
+.hero h1 em, .note-link, .notification-row.unread b, .dashboard-panel-link:hover {
+  color: var(--glow-color) !important;
+}
+
+.modal input:focus, .modal textarea:focus, .modal select:focus,
+.search:focus, .filters select:focus {
+  border-color: var(--glow-color) !important;
+  box-shadow: 0 0 0 3px var(--glow-soft) !important;
+}
+
+.system-icon, .location-symbol, .feed-symbol, .unit-icon, .serial-icon, .timeline-icon {
+  background: var(--glow-faint) !important;
+  border: 1px solid var(--glow-line) !important;
+  box-shadow: inset 0 1px var(--glow-soft), 0 0 14px var(--glow-soft) !important;
+}
+
+.metric-art, .brand-bell, .system-icon, .location-symbol, .feed-symbol, .alert-symbol:not(.waiting) {
+  filter: drop-shadow(0 0 7px var(--glow-color)) drop-shadow(0 0 18px var(--glow-strong)) !important;
+}
+
+.trend-chart path[filter],
+.trend-chart path:not([fill]),
+.trend-chart circle {
+  stroke: var(--glow-color) !important;
+  fill: var(--glow-color) !important;
+}
+
+/* --------------------------------------------------------------------------
+   4. LOGOS / ICONS (--logo-color) — Icon & Logo Pigment Only
+   -------------------------------------------------------------------------- */
+.icon,
+.brand-mark,
+.brand-bell,
+.system-icon,
+.system-icon .icon,
+.metric-art,
+.metric-art .icon,
+.warning-art,
+.metric-label > .icon,
+.dashboard-panel-head h2 > .icon,
+.location-symbol,
+.location-symbol > .icon,
+.location-info span > .icon,
+.feed-symbol,
+.feed-symbol > .icon,
+.alert-symbol:not(.waiting),
+.alert-symbol:not(.waiting) > .icon,
+.alert-arrow,
+.dashboard-all-clear .icon,
+.sidebar nav button > .icon,
+.logout .icon,
+.tool .icon,
+.profile-trigger .icon,
+.glass-action .icon,
+.dashboard-panel-link .icon,
+.chart-window .icon,
+.unit-icon,
+.serial-icon,
+.timeline-icon {
+  color: var(--logo-color) !important;
+}
+
+/* --------------------------------------------------------------------------
+   Theme Customizer Dialog & Live Preview Box
+   -------------------------------------------------------------------------- */
+.theme-modal {
+  width: min(370px, calc(100vw - 24px));
+  padding: 22px;
+  position: fixed;
+  inset: 78px 22px auto auto;
+  margin: 0;
+  max-height: calc(100dvh - 96px);
+  overflow: auto;
+  z-index: 1200;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+#themeDialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  overflow: visible;
+  pointer-events: none;
+}
+
+#themeDialog[open] {
+  display: block;
+}
+
+#themeDialog .theme-modal {
+  pointer-events: auto;
+}
+
+#themeDialog::backdrop {
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
+.theme-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.theme-field {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 650;
+}
+
+.theme-field input {
+  width: 64px;
+  height: 40px;
+  padding: 3px;
+  border: 1px solid var(--glow-line) !important;
+  border-radius: 10px;
+  background: var(--bg-surface) !important;
+  cursor: pointer;
+}
+
+.theme-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  border: 1px solid var(--glow-line);
+  border-radius: 16px;
+  background: var(--bg-color);
+  color: var(--text-color);
+  box-shadow: 0 0 18px var(--glow-faint);
+}
+
+.theme-preview span {
+  opacity: .8;
+}
+
+.theme-preview .theme-preview-icons {
+  color: var(--preview-logo, var(--logo-color)) !important;
+  filter: drop-shadow(0 0 7px var(--preview-glow, var(--glow-color)));
+}
+
+.theme-preview button {
+  align-self: flex-start;
+  padding: 9px 14px;
+  border: 1px solid var(--preview-glow, var(--glow-color));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--preview-glow, var(--glow-color)) 22%, transparent);
+  color: var(--text-color);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--preview-glow, var(--glow-color)) 25%, transparent);
+}
+
+.theme-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 18px 0 0;
+}
+
+.theme-tool {
+  display: inline-flex !important;
+}
+
+@media(max-width: 600px) {
+  .theme-modal {
+    inset: 70px 10px auto auto;
+    width: min(340px, calc(100vw - 20px));
+    padding: 18px;
+    max-height: calc(100dvh - 82px);
+  }
+}
+
+.secondary {
+  border-radius: 13px;
+  padding: 13px 17px;
+  font: 700 12px Inter, sans-serif;
+  cursor: pointer;
+  transition: .25s var(--e);
 }

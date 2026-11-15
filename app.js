@@ -713,10 +713,11 @@ function deliveryBatchCard(rows) {
   let actions = '';
   if (isAdmin) {
     if (r.status === 'pending_admin_approval' || r.status === 'approved_for_delivery') {
-      actions = `<span class="pill">${r.status === 'pending_admin_approval' ? 'Awaiting employee proof' : 'Awaiting delivery note (legacy)'}</span><button class="smallbtn danger" onclick="cancelDeliveryBatch('${batchId}')">Cancel</button>`;
+      actions += `<span class="pill">${r.status === 'pending_admin_approval' ? 'Awaiting employee proof' : 'Awaiting delivery note (legacy)'}</span><button class="smallbtn danger" onclick="cancelDeliveryBatch('${batchId}')">Cancel</button>`;
     } else if (r.status === 'delivery_note_submitted') {
-      actions = `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${batchId}')">View ${hasPhotoProof ? 'photos & note' : 'note'}</button><button class="smallbtn" onclick="completeDeliveryBatch('${batchId}')">✓ Confirm completed</button><button class="smallbtn danger" onclick="cancelDeliveryBatch('${batchId}')">Reject</button>`;
-    } else if (r.delivery_note_url) actions = `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${batchId}')">View evidence</button>`;
+      actions += `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${batchId}')">View ${hasPhotoProof ? 'photos & note' : 'note'}</button><button class="smallbtn" onclick="completeDeliveryBatch('${batchId}')">✓ Confirm completed</button><button class="smallbtn danger" onclick="cancelDeliveryBatch('${batchId}')">Reject</button>`;
+    } else if (r.delivery_note_url) actions += `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${batchId}')">View evidence</button>`;
+    actions += `<button class="smallbtn danger" onclick="deleteLegacyDeliveryRequest('${r.id}')">Delete permanently</button>`;
   } else if (isDelivery() && (r.status === 'pending_admin_approval' || r.status === 'approved_for_delivery')) {
     actions = `<span class="pill">Previous system · ask your manager for a new order</span>`;
   } else if (isDelivery() && r.delivery_note_url) {
@@ -736,10 +737,11 @@ function deliveryCard(r) {
   const serial = r.inventory_units?.serial_number || serials.find(s => s.id === r.unit_id)?.serial_number || '—';
   let actions = '';
   if (isAdmin) {
-    if (r.status === 'pending_admin_approval') actions = `<button class="smallbtn" onclick="approveDelivery('${r.id}')">✓ Approve old request</button><button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Reject</button>`;
-    else if (r.status === 'approved_for_delivery') actions = `<button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Cancel request</button>`;
-    else if (r.status === 'delivery_note_submitted') actions = `<button class="smallbtn" onclick="viewDeliveryNote('${r.id}')">View note</button><button class="smallbtn" onclick="completeDelivery('${r.id}')">✓ Confirm delivery</button><button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Reject</button>`;
-    else if (r.delivery_note_url) actions = `<button class="smallbtn" onclick="viewDeliveryNote('${r.id}')">View note</button>`;
+    if (r.status === 'pending_admin_approval') actions += `<button class="smallbtn" onclick="approveDelivery('${r.id}')">✓ Approve old request</button><button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Reject</button>`;
+    else if (r.status === 'approved_for_delivery') actions += `<button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Cancel request</button>`;
+    else if (r.status === 'delivery_note_submitted') actions += `<button class="smallbtn" onclick="viewDeliveryNote('${r.id}')">View note</button><button class="smallbtn" onclick="completeDelivery('${r.id}')">✓ Confirm delivery</button><button class="smallbtn danger" onclick="rejectDelivery('${r.id}')">Reject</button>`;
+    else if (r.delivery_note_url) actions += `<button class="smallbtn" onclick="viewDeliveryNote('${r.id}')">View note</button>`;
+    actions += `<button class="smallbtn danger" onclick="deleteLegacyDeliveryRequest('${r.id}')">Delete permanently</button>`;
   } else if (isDelivery() && r.status === 'approved_for_delivery') {
     actions = `<button class="smallbtn" onclick="openDeliveryNote('${r.id}')">Upload delivery note</button>`;
   } else if (isDelivery() && r.delivery_note_url) {
@@ -1175,6 +1177,15 @@ async function cancelWarehouseOrder(id) {
   if(!isAdmin) return;const reason=prompt('Reason to cancel this order?');if(reason===null) return;
   const {error}=await sb.rpc('manager_cancel_warehouse_order',{p_order_id:id,p_reason:reason.trim()});
   if(error) return toast(error.message,'error');toast('Order cancelled.');await loadAll();render();
+}
+
+async function deleteLegacyDeliveryRequest(id) {
+  if (!isAdmin) return;
+  if (!confirm('Permanently delete this older delivery request? A deletion record will remain in Activity history. This cannot be undone.')) return;
+  const {error}=await sb.rpc('manager_delete_legacy_delivery_request',{p_request_id:id});
+  if(error) return toast(error.message,'error');
+  toast('Older delivery request deleted. A record was saved in Activity.');
+  await loadAll();render();
 }
 
 async function deleteWarehouseOrder(id) {

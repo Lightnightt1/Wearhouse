@@ -688,7 +688,7 @@ function warehouseOrderCard(o) {
     if (o.status==='pending_admin_approval') actions += `<button class="smallbtn" onclick="approveWarehouseOrder('${o.id}')">✓ Approve serials</button><button class="smallbtn danger" onclick="rejectWarehouseSerials('${o.id}')">Reject serials</button>`;
     if (o.status==='delivery_note_submitted') actions += `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${o.current_batch_id}')">View proof</button>`;
     if (['assigned','correction_required','approved_for_delivery','pending_admin_approval','delivery_note_submitted'].includes(o.status)) actions += `<button class="smallbtn danger" onclick="cancelWarehouseOrder('${o.id}')">Cancel order</button>`;
-    if (o.status==='cancelled') actions += `<button class="smallbtn danger" onclick="deleteCancelledWarehouseOrder('${o.id}')">Delete permanently</button>`;
+    actions += `<button class="smallbtn danger" onclick="deleteWarehouseOrder('${o.id}')">Delete permanently</button>`;
     if (o.status==='completed') actions+=`<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${o.current_batch_id}')">View proof</button>`;
   } else if (isDelivery()) {
     if (['assigned','correction_required'].includes(o.status)) actions += `<button class="smallbtn" onclick="openDriverRequest('${o.id}')">Choose serial numbers</button>`;
@@ -1177,12 +1177,12 @@ async function cancelWarehouseOrder(id) {
   if(error) return toast(error.message,'error');toast('Order cancelled.');await loadAll();render();
 }
 
-async function deleteCancelledWarehouseOrder(id) {
+async function deleteWarehouseOrder(id) {
   if(!isAdmin) return;
-  if(!confirm('Permanently delete this cancelled order? This cannot be undone.')) return;
-  const {error}=await sb.rpc('manager_delete_cancelled_warehouse_order',{p_order_id:id});
+  if(!confirm('Permanently delete this order? It will disappear from Orders, but a deletion record will remain in Activity history. This cannot be undone.')) return;
+  const {error}=await sb.rpc('manager_delete_warehouse_order',{p_order_id:id});
   if(error) return toast(error.message,'error');
-  toast('Cancelled order deleted.');
+  toast('Order deleted. A record was saved in Activity.');
   await loadAll();render();
 }
 function openWarehouseDeliveryProof(id) {

@@ -224,6 +224,8 @@ $('themeClose')?.addEventListener('click', () => $('themeDialog').close());
 $('themeDialog')?.addEventListener('close', () => loadAccountTheme());
 function setPendingThemeColor(key, value) {
   pendingTheme[key] = value;
+  // Apply instantly while the user is choosing; Save stores the selection to their account.
+  applyTheme(pendingTheme, true);
 }
 $('themeTextColor')?.addEventListener('input', e => setPendingThemeColor('text', e.target.value));
 $('themeBgColor')?.addEventListener('input', e => setPendingThemeColor('bg', e.target.value));
@@ -235,6 +237,7 @@ $('themeReset')?.addEventListener('click', () => {
   $('themeBgColor').value = pendingTheme.bg;
   $('themeAccentColor').value = pendingTheme.glow;
   $('themeSurfaceColor').value = pendingTheme.logos;
+  applyTheme(pendingTheme, true);
 });
 $('themeSave')?.addEventListener('click', async () => {
   if (!sb || !user) return;

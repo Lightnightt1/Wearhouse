@@ -222,17 +222,19 @@ function openThemeEditor() {
 $('themeBtn')?.addEventListener('click', openThemeEditor);
 $('themeClose')?.addEventListener('click', () => $('themeDialog').close());
 $('themeDialog')?.addEventListener('close', () => loadAccountTheme());
-function previewThemeChange(key, value) {
+function setPendingThemeColor(key, value) {
   pendingTheme[key] = value;
-  applyTheme(pendingTheme, true);
 }
-$('themeTextColor')?.addEventListener('input', e => previewThemeChange('text', e.target.value));
-$('themeBgColor')?.addEventListener('input', e => previewThemeChange('bg', e.target.value));
-$('themeAccentColor')?.addEventListener('input', e => previewThemeChange('glow', e.target.value));
-$('themeSurfaceColor')?.addEventListener('input', e => previewThemeChange('logos', e.target.value));
+$('themeTextColor')?.addEventListener('input', e => setPendingThemeColor('text', e.target.value));
+$('themeBgColor')?.addEventListener('input', e => setPendingThemeColor('bg', e.target.value));
+$('themeAccentColor')?.addEventListener('input', e => setPendingThemeColor('glow', e.target.value));
+$('themeSurfaceColor')?.addEventListener('input', e => setPendingThemeColor('logos', e.target.value));
 $('themeReset')?.addEventListener('click', () => {
   pendingTheme = { ...DEFAULT_THEME };
-  applyTheme(pendingTheme, true);
+  $('themeTextColor').value = pendingTheme.text;
+  $('themeBgColor').value = pendingTheme.bg;
+  $('themeAccentColor').value = pendingTheme.glow;
+  $('themeSurfaceColor').value = pendingTheme.logos;
 });
 $('themeSave')?.addEventListener('click', async () => {
   if (!sb || !user) return;

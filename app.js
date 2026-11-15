@@ -245,7 +245,14 @@ $('themeSave')?.addEventListener('click', async () => {
 
 function updateAuth() {
   loadAccountTheme();
-  $('themeBtn')?.classList.toggle('hidden', !user);
+  const themeButton = $('themeBtn');
+  if (themeButton) {
+    const canCustomize = !!user;
+    themeButton.classList.toggle('hidden', !canCustomize);
+    themeButton.hidden = !canCustomize;
+    themeButton.setAttribute('aria-hidden', String(!canCustomize));
+    themeButton.tabIndex = canCustomize ? 0 : -1;
+  }
   const name = profile?.full_name || user?.email || 'Warehouse';
   if ($('hello')) {
     $('hello').textContent = !user
@@ -1503,7 +1510,13 @@ $('loginForm').onsubmit = async e => {
 
 $('logout').onclick = async () => {
   if (!sb) return;
-  await sb.auth.signOut();
+  const { error } = await sb.auth.signOut();
+  if (error) { toast(error.message || 'Could not sign out', 'error'); return; }
+  user = null;
+  profile = null;
+  isAdmin = false;
+  loadAccountTheme();
+  updateAuth();
   toast('Signed out');
   go('dashboard');
 };

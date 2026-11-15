@@ -2187,3 +2187,39 @@ html, body {
   cursor: pointer;
   transition: .25s var(--e);
 }
+
+/* Compact, modern Color Studio — presentation only; controls and behavior unchanged. */
+#themeDialog .theme-modal {
+  width: min(470px, calc(100vw - 32px));
+  padding: 21px;
+  border-radius: 22px;
+  max-height: min(82dvh, 650px);
+  overflow: auto;
+}
+#themeDialog .theme-heading { gap: 12px; }
+#themeDialog .theme-heading-icon { flex-basis: 40px; width: 40px; height: 40px; border-radius: 13px; }
+#themeDialog .theme-heading-icon .icon { width: 19px; height: 19px; }
+#themeDialog .theme-modal h2 { font-size: 21px; margin: 2px 0 4px; }
+#themeDialog .theme-help { max-width: 340px; font-size: 11px; line-height: 1.5; }
+#themeDialog .theme-section-title { margin: 17px 0 8px; font-size: 8px; }
+#themeDialog .theme-section-title small { font-size: 9px; }
+#themeDialog .theme-fields { gap: 8px; }
+#themeDialog .theme-field { padding: 10px 11px; border-radius: 12px; min-height: 58px; }
+#themeDialog .theme-swatch-copy { gap: 3px; }
+#themeDialog .theme-swatch-copy b { font-size: 11px; }
+#themeDialog .theme-swatch-copy small { font-size: 9px; }
+#themeDialog .theme-field input { flex-basis: 34px; width: 34px; height: 34px; border-radius: 10px; }
+#themeDialog .theme-preview { gap: 6px; padding: 12px 14px; border-radius: 13px; }
+#themeDialog .theme-preview-mark { font-size: 19px; }
+#themeDialog .theme-preview strong { font-size: 15px; }
+#themeDialog .theme-preview .theme-preview-icons { padding: 4px 0 0; font-size: 15px; }
+#themeDialog .theme-preview button { padding: 7px 10px; font-size: 9px; }
+#themeDialog .theme-actions { margin-top: 14px; gap: 8px; }
+#themeDialog .theme-actions button { padding: 9px 13px; border-radius: 10px; font-size: 11px; }
+/* Auth visibility must win over toolbar display styles. */
+#themeBtn.hidden, #themeBtn[hidden], .theme-tool.hidden { display: none !important; visibility: hidden !important; pointer-events: none !important; }
+@media (max-width: 600px) {
+  #themeDialog .theme-modal { width: calc(100vw - 22px); padding: 16px; max-height: 84dvh; }
+  #themeDialog .theme-fields { grid-template-columns: 1fr 1fr; }
+  #themeDialog .theme-field { min-height: 54px; }
+}

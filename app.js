@@ -18,6 +18,7 @@ let serials = [];
 let deliveryRequests = [];
 let warehouseOrders = [];
 let activeOrderId = null;
+let editingWarehouseOrderId = null;
 let notifications = [];
 let user = null;
 let profile = null;
@@ -683,9 +684,11 @@ function warehouseOrderCard(o) {
   const serialLabels = batchRows.map(r=> `${r.products?.name||'Product'} · ${r.inventory_units?.serial_number||'—'}`);
   let actions='';
   if (isAdmin) {
+    if (['assigned','correction_required'].includes(o.status) && !o.current_batch_id) actions += `<button class="smallbtn" onclick="editWarehouseOrder('${o.id}')">✎ Edit order</button>`;
     if (o.status==='pending_admin_approval') actions += `<button class="smallbtn" onclick="approveWarehouseOrder('${o.id}')">✓ Approve serials</button><button class="smallbtn danger" onclick="rejectWarehouseSerials('${o.id}')">Reject serials</button>`;
     if (o.status==='delivery_note_submitted') actions += `<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${o.current_batch_id}')">View proof</button>`;
     if (['assigned','correction_required','approved_for_delivery','pending_admin_approval','delivery_note_submitted'].includes(o.status)) actions += `<button class="smallbtn danger" onclick="cancelWarehouseOrder('${o.id}')">Cancel order</button>`;
+    if (o.status==='cancelled') actions += `<button class="smallbtn danger" onclick="deleteCancelledWarehouseOrder('${o.id}')">Delete permanently</button>`;
     if (o.status==='completed') actions+=`<button class="smallbtn" onclick="viewBatchDeliveryEvidence('${o.current_batch_id}')">View proof</button>`;
   } else if (isDelivery()) {
     if (['assigned','correction_required'].includes(o.status)) actions += `<button class="smallbtn" onclick="openDriverRequest('${o.id}')">Choose serial numbers</button>`;
@@ -1008,6 +1011,7 @@ function availableDriverUnits() {
 
 function openManagerOrder() {
   if (!isAdmin) return;
+  editingWarehouseOrderId = null;
   const staff=profiles.filter(p=>p.active && p.role==='delivery_guy');
   if (!staff.length) return toast('Create an active delivery employee account first.', 'error');
   $('managerOrderForm').reset();
@@ -1015,7 +1019,37 @@ function openManagerOrder() {
   $('moItems').innerHTML='';
   $('moDate').value = new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
   $('managerOrderMsg').textContent='';
+  $('managerOrderForm').querySelector('h2').textContent='Create delivery order.';
+  $('submitManagerOrderBtn').textContent='Create order · Assign employee';
   addManagerOrderLine();
+  managerOrderDialog.showModal();
+}
+
+function editWarehouseOrder(orderId) {
+  if (!isAdmin) return;
+  const o=warehouseOrders.find(x=>x.id===orderId);
+  if (!o || !['assigned','correction_required'].includes(o.status) || o.current_batch_id) return toast('This order can no longer be edited.', 'error');
+  const staff=profiles.filter(p=>p.active && p.role==='delivery_guy');
+  $('managerOrderForm').reset();
+  $('moDriver').innerHTML=staff.map(p=>`<option value="${esc(p.id)}">${esc(p.full_name||p.email)}</option>`).join('');
+  $('moDriver').value=o.driver_id;
+  $('moServiceType').value=o.service_type;
+  $('moRecipient').value=o.recipient||'';
+  $('moDate').value=o.delivery_date||'';
+  $('moDestination').value=o.destination||'';
+  $('moNotes').value=o.notes||'';
+  $('moItems').innerHTML='';
+  (o.lines||[]).forEach(line=>{
+    addManagerOrderLine();
+    const row=$('moItems').lastElementChild;
+    row.querySelector('.mo-product').value=line.product_id;
+    row.querySelector('.mo-qty').value=line.quantity;
+    row.querySelector('.mo-product').dispatchEvent(new Event('change'));
+  });
+  editingWarehouseOrderId=orderId;
+  $('managerOrderMsg').textContent='';
+  $('managerOrderForm').querySelector('h2').textContent='Edit delivery order.';
+  $('submitManagerOrderBtn').textContent='Save order changes';
   managerOrderDialog.showModal();
 }
 
@@ -1047,14 +1081,19 @@ async function submitManagerOrder(e) {
   if (beyond) return msg.textContent=`The requested quantity exceeds available stock (${availableStockByProduct(beyond.product_id)}).`;
   const btn=$('submitManagerOrderBtn');busy(btn,true,'Creating order…');msg.textContent='';
   try {
-    const {error}=await sb.rpc('manager_create_warehouse_order_v2',{
+    const payload={
       p_driver_id:$('moDriver').value,p_lines:items,
       p_destination:$('moDestination').value.trim(),p_recipient:$('moRecipient').value.trim(),
       p_delivery_date:$('moDate').value,p_service_type:$('moServiceType').value,
       p_notes:$('moNotes').value.trim()
-    });
+    };
+    const {error}=editingWarehouseOrderId
+      ? await sb.rpc('manager_update_warehouse_order',{p_order_id:editingWarehouseOrderId,...payload})
+      : await sb.rpc('manager_create_warehouse_order_v2',payload);
     if (error) throw error;
-    managerOrderDialog.close();toast('Order assigned. The employee can now select serial numbers.');
+    const wasEditing=!!editingWarehouseOrderId;
+    editingWarehouseOrderId=null;
+    managerOrderDialog.close();toast(wasEditing?'Order updated successfully.':'Order assigned. The employee can now select serial numbers.');
     await loadAll();go('deliveries');
   } catch(err){msg.textContent=err.message||'Could not create the order.';}
   finally{busy(btn,false);}
@@ -1136,6 +1175,15 @@ async function cancelWarehouseOrder(id) {
   if(!isAdmin) return;const reason=prompt('Reason to cancel this order?');if(reason===null) return;
   const {error}=await sb.rpc('manager_cancel_warehouse_order',{p_order_id:id,p_reason:reason.trim()});
   if(error) return toast(error.message,'error');toast('Order cancelled.');await loadAll();render();
+}
+
+async function deleteCancelledWarehouseOrder(id) {
+  if(!isAdmin) return;
+  if(!confirm('Permanently delete this cancelled order? This cannot be undone.')) return;
+  const {error}=await sb.rpc('manager_delete_cancelled_warehouse_order',{p_order_id:id});
+  if(error) return toast(error.message,'error');
+  toast('Cancelled order deleted.');
+  await loadAll();render();
 }
 function openWarehouseDeliveryProof(id) {
   const o=warehouseOrders.find(x=>x.id===id);

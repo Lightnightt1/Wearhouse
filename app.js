@@ -271,7 +271,6 @@ function updateAuth() {
   if ($('avatar')) $('avatar').textContent = String(name).slice(0, 1).toUpperCase();
   $('logout')?.classList.toggle('hidden', !user);
 
-  document.querySelectorAll('.auth-only').forEach(el => el.classList.toggle('hidden', !user || profile?.active !== true));
   document.querySelectorAll('.admin-only').forEach(el => el.classList.toggle('hidden', !isAdmin));
   document.querySelectorAll('.delivery-only').forEach(el => el.classList.toggle('hidden', !isDelivery()));
   document.querySelectorAll('.staff-only').forEach(el => el.classList.toggle('hidden', !isStaff()));
@@ -378,7 +377,7 @@ function subscribeRealtime() {
   };
 
   realtimeChannel = sb.channel(`warehouse-live-${user?.id || 'public'}`);
-  ['products', 'activity', 'inventory_units', 'delivery_requests', 'warehouse_delivery_orders', 'notifications', 'profiles', 'arcade_game_scores'].forEach(table => {
+  ['products', 'activity', 'inventory_units', 'delivery_requests', 'warehouse_delivery_orders', 'notifications', 'profiles'].forEach(table => {
     realtimeChannel.on('postgres_changes', { event: '*', schema: 'public', table }, refresh);
   });
   realtimeChannel.subscribe(status => setConnection(status === 'SUBSCRIBED'));
@@ -391,7 +390,6 @@ function renderSetup() {
 function render() {
   updateAuth();
 
-  if ((!user || profile?.active !== true) && currentPage === 'arcade') currentPage = 'dashboard';
   if (!isAdmin && ['admin', 'users', 'serials'].includes(currentPage)) currentPage = isDelivery() ? 'deliveries' : 'dashboard';
   if (!isStaff() && currentPage === 'deliveries') currentPage = 'dashboard';
   document.querySelectorAll('.sidebar nav button').forEach(btn => btn.classList.toggle('active', btn.dataset.page === currentPage));
@@ -405,123 +403,7 @@ function render() {
   else if (currentPage === 'serials') serialManager();
   else if (currentPage === 'deliveries') deliveries();
   else if (currentPage === 'notifications') notificationsPage();
-  else if (currentPage === 'arcade') renderArcade();
 }
-
-
-let arcadeLeaderboard = [];
-let arcadeSessionId = null, arcadeMode = null, arcadeSnake = null;
-let arcadeSnakeTimer = null, arcadeReactionTimer = null, arcadeReactionStartedAt = 0;
-let arcadeGameMessage = '', arcadeGameMessageKind = '';
-
-async function loadArcadeLeaderboard() {
-  if (!sb || !user) return;
-  const {data,error}=await sb.from('arcade_leaderboard').select('*').order('total_points',{ascending:false}).order('last_played_at',{ascending:true}).limit(50);
-  if(error){console.warn('Arcade leaderboard:',error);return;}
-  arcadeLeaderboard=data||[];
-  if(currentPage==='arcade'&&!arcadeMode)renderArcadeLeaderboard();
-}
-function arcadeLeaderboardMarkup() {
-  if(!arcadeLeaderboard.length)return '<div class="arcade-empty">No scores yet. Be the first to play!</div>';
-  return '<div class="arcade-table-wrap"><table class="arcade-table"><thead><tr><th>#</th><th>Employee</th><th>Points</th><th>Games</th><th>Best Snake</th><th>Best Reaction</th></tr></thead><tbody>'+
-    arcadeLeaderboard.map((r,i)=>'<tr class="'+(r.user_id===user?.id?'is-you':'')+'"><td><span class="arcade-rank">'+(i+1)+'</span></td><td><strong>'+esc(r.employee_name)+'</strong>'+(r.user_id===user?.id?'<small class="arcade-you">YOU</small>':'')+'</td><td class="arcade-points">'+Number(r.total_points||0).toLocaleString()+'</td><td>'+Number(r.games_played||0)+'</td><td>'+Number(r.best_snake_score||0)+'</td><td>'+(r.best_reaction_ms==null?'—':Number(r.best_reaction_ms)+' ms')+'</td></tr>').join('')+
-    '</tbody></table></div>';
-}
-function renderArcadeLeaderboard(){const el=$('arcadeLeaderboard');if(el)el.innerHTML=arcadeLeaderboardMarkup();}
-function renderArcade(){
-  if(!user||profile?.active!==true){view.innerHTML='<section class="hero"><span class="eyebrow">EMPLOYEE ARCADE</span><h1>Sign in to play.</h1></section>';return;}
-  let active='';
-  if(arcadeMode==='snake'){
-    active='<section class="arcade-game-panel glass"><div class="arcade-game-head"><div><span class="eyebrow">SNAKE CHALLENGE</span><h2>Snake</h2><p>Collect the glowing dots. Avoid the walls and your tail.</p></div><div class="arcade-score-chip">Score <b id="snakeScore">'+(arcadeSnake?.score||0)+'</b></div></div><canvas id="snakeCanvas" class="snake-canvas" width="400" height="280" aria-label="Snake game board"></canvas><div class="arcade-controls"><span>Use arrow keys or WASD</span><button class="secondary" data-arcade-action="snake-cancel">Quit game</button></div></section>';
-  }else if(arcadeMode==='reaction'){
-    active='<section class="arcade-game-panel glass"><div class="arcade-game-head"><div><span class="eyebrow">REACTION CHALLENGE</span><h2>Reaction time</h2><p>Wait for green, then tap as quickly as you can.</p></div></div><button class="reaction-pad '+(arcadeReactionStartedAt?'reaction-go':(arcadeGameMessageKind==='error'?'false-start':'reaction-wait'))+'" data-arcade-action="reaction-click">'+(arcadeReactionStartedAt?'TAP NOW':'WAIT FOR GREEN')+'</button><div class="arcade-controls"><span>'+esc(arcadeGameMessage||'Focus…')+'</span><button class="secondary" data-arcade-action="reaction-cancel">Quit game</button></div></section>';
-  }else{
-    active='<div class="arcade-game-grid"><article class="arcade-game-card glass"><div class="arcade-game-art snake-art"><span>🐍</span></div><div class="arcade-card-copy"><span class="eyebrow">ARCADE CLASSIC</span><h2>Snake</h2><p>Collect dots without hitting yourself or the wall.</p><button class="primary" data-arcade-action="start-snake">Play Snake</button></div></article><article class="arcade-game-card glass"><div class="arcade-game-art reaction-art"><span>⚡</span></div><div class="arcade-card-copy"><span class="eyebrow">SPEED TEST</span><h2>Reaction</h2><p>Wait for the green signal and test your reaction speed.</p><button class="primary" data-arcade-action="start-reaction">Play Reaction</button></div></article></div>';
-  }
-  const mine=arcadeLeaderboard.find(x=>x.user_id===user.id);
-  view.innerHTML='<section class="page-heading arcade-heading"><div><span class="eyebrow">WEARHOUSE / EMPLOYEE ARCADE</span><h1>Play. Earn. Climb.</h1><p>Play solo, collect points and compete on the live employee leaderboard.</p></div><div class="arcade-your-score"><span>Your total</span><b>'+(Number(mine?.total_points||0).toLocaleString())+' pts</b></div></section>'+
-    (arcadeGameMessage&&!arcadeMode?'<p class="arcade-result '+arcadeGameMessageKind+'">'+esc(arcadeGameMessage)+'</p>':'')+active+
-    '<section class="arcade-leaderboard glass"><div class="arcade-section-head"><div><span class="eyebrow">LIVE RANKINGS</span><h2>Employee leaderboard</h2></div><span class="live-pill"><i></i> LIVE</span></div><div id="arcadeLeaderboard">'+arcadeLeaderboardMarkup()+'</div></section><p class="arcade-footnote">Scores are checked by the server and added to your account after each game.</p>';
-  if(arcadeMode==='snake')drawArcadeSnake();
-  if(!arcadeMode)loadArcadeLeaderboard();
-}
-function renderArcadeResult(message,kind){arcadeGameMessage=message;arcadeGameMessageKind=kind;renderArcade();}
-async function arcadeStartSession(game){if(!user||!sb)throw Error('Please sign in first.');const {data,error}=await sb.rpc('arcade_start_game',{p_game:game});if(error)throw error;return data;}
-async function arcadeCancelSession(){
-  if(arcadeSessionId&&sb)await sb.rpc('arcade_cancel_game',{p_session_id:arcadeSessionId});
-  arcadeSessionId=null;clearTimeout(arcadeReactionTimer);clearInterval(arcadeSnakeTimer);arcadeSnakeTimer=null;arcadeReactionTimer=null;arcadeMode=null;
-}
-async function startArcadeSnake(){
-  try{
-    arcadeGameMessage='';arcadeGameMessageKind='';arcadeSessionId=await arcadeStartSession('snake');arcadeMode='snake';
-    arcadeSnake={body:[{x:8,y:7},{x:7,y:7},{x:6,y:7}],direction:{x:1,y:0},nextDirection:{x:1,y:0},food:{x:14,y:7},score:0};
-    renderArcade();arcadeSnakeTimer=setInterval(tickArcadeSnake,135);
-  }catch(e){renderArcadeResult(e.message||'Could not start Snake.','error');}
-}
-function drawArcadeSnake(){
-  const canvas=$('snakeCanvas');if(!canvas||!arcadeSnake)return;
-  const ctx=canvas.getContext('2d'),cell=20;ctx.clearRect(0,0,400,280);ctx.fillStyle='rgba(2,18,24,.72)';ctx.fillRect(0,0,400,280);
-  ctx.strokeStyle='rgba(170,255,239,.055)';
-  for(let x=0;x<=20;x++){ctx.beginPath();ctx.moveTo(x*cell,0);ctx.lineTo(x*cell,280);ctx.stroke();}
-  for(let y=0;y<=14;y++){ctx.beginPath();ctx.moveTo(0,y*cell);ctx.lineTo(400,y*cell);ctx.stroke();}
-  ctx.fillStyle='#ffca72';ctx.shadowColor='#ffca72';ctx.shadowBlur=12;ctx.beginPath();ctx.arc(arcadeSnake.food.x*cell+10,arcadeSnake.food.y*cell+10,6,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
-  arcadeSnake.body.forEach((p,i)=>{ctx.fillStyle=i===0?'#aaffef':'rgba(102,220,202,.78)';ctx.shadowColor='#aaffef';ctx.shadowBlur=i===0?12:3;ctx.beginPath();ctx.roundRect(p.x*cell+2,p.y*cell+2,16,16,5);ctx.fill();});ctx.shadowBlur=0;
-}
-function tickArcadeSnake(){
-  if(!arcadeSnake||arcadeMode!=='snake')return;const s=arcadeSnake;
-  if(s.nextDirection.x!==-s.direction.x||s.nextDirection.y!==-s.direction.y)s.direction=s.nextDirection;
-  const head={x:s.body[0].x+s.direction.x,y:s.body[0].y+s.direction.y};
-  if(head.x<0||head.x>=20||head.y<0||head.y>=14||s.body.some((p,i)=>i<s.body.length-1&&p.x===head.x&&p.y===head.y)){finishArcadeSnake();return;}
-  s.body.unshift(head);
-  if(head.x===s.food.x&&head.y===s.food.y){
-    s.score++;if(s.score>=100){finishArcadeSnake();return;}
-    let food;do{food={x:Math.floor(Math.random()*20),y:Math.floor(Math.random()*14)};}while(s.body.some(p=>p.x===food.x&&p.y===food.y));s.food=food;
-    if($('snakeScore'))$('snakeScore').textContent=String(s.score);
-  }else s.body.pop();drawArcadeSnake();
-}
-async function finishArcadeSnake(){
-  if(!arcadeSessionId||!arcadeSnake)return;clearInterval(arcadeSnakeTimer);arcadeSnakeTimer=null;
-  const id=arcadeSessionId,score=arcadeSnake.score;arcadeGameMessage='Saving your score…';arcadeGameMessageKind='busy';renderArcade();
-  try{
-    const {data,error}=await sb.rpc('arcade_finish_game',{p_session_id:id,p_score:score});if(error)throw error;
-    arcadeSessionId=null;arcadeMode=null;arcadeSnake=null;await loadArcadeLeaderboard();renderArcadeResult('Game over · '+data.points_awarded+' points added to your account.','success');
-  }catch(e){await sb.rpc('arcade_cancel_game',{p_session_id:id});arcadeSessionId=null;arcadeMode=null;arcadeSnake=null;renderArcadeResult(e.message||'Score could not be saved.','error');}
-}
-function setArcadeSnakeDirection(x,y){if(!arcadeSnake)return;if(x!==-arcadeSnake.direction.x||y!==-arcadeSnake.direction.y)arcadeSnake.nextDirection={x,y};}
-async function startArcadeReaction(){
-  try{
-    arcadeGameMessage='Wait for the green signal…';arcadeGameMessageKind='';arcadeSessionId=await arcadeStartSession('reaction');arcadeMode='reaction';arcadeReactionStartedAt=0;renderArcade();
-    const delay=1600+Math.floor(Math.random()*2600);
-    arcadeReactionTimer=setTimeout(async()=>{
-      const {error}=await sb.rpc('arcade_reaction_ready',{p_session_id:arcadeSessionId});
-      if(error){await arcadeCancelSession();renderArcadeResult(error.message||'Could not start the test.','error');return;}
-      arcadeReactionStartedAt=performance.now();arcadeGameMessage='Tap now!';renderArcade();
-    },delay);
-  }catch(e){renderArcadeResult(e.message||'Could not start Reaction.','error');}
-}
-async function clickArcadeReaction(){
-  if(arcadeMode!=='reaction')return;
-  if(!arcadeReactionStartedAt){await arcadeCancelSession();arcadeReactionStartedAt=0;renderArcadeResult('Too early! Wait for green next time.','error');return;}
-  const id=arcadeSessionId;clearTimeout(arcadeReactionTimer);arcadeGameMessage='Checking your reaction…';arcadeGameMessageKind='busy';renderArcade();
-  try{
-    const {data,error}=await sb.rpc('arcade_finish_game',{p_session_id:id,p_score:0});if(error)throw error;
-    arcadeSessionId=null;arcadeMode=null;arcadeReactionStartedAt=0;await loadArcadeLeaderboard();renderArcadeResult(data.score+' ms · '+data.points_awarded+' points earned!','success');
-  }catch(e){await sb.rpc('arcade_cancel_game',{p_session_id:id});arcadeSessionId=null;arcadeMode=null;arcadeReactionStartedAt=0;renderArcadeResult(e.message||'Reaction score could not be saved.','error');}
-}
-async function handleArcadeAction(event){
-  const btn=event.target.closest('[data-arcade-action]');if(!btn)return;
-  const action=btn.dataset.arcadeAction;
-  if(action==='start-snake')await startArcadeSnake();
-  else if(action==='start-reaction')await startArcadeReaction();
-  else if(action==='reaction-click')await clickArcadeReaction();
-  else if(action==='snake-cancel'||action==='reaction-cancel'){await arcadeCancelSession();arcadeSnake=null;arcadeReactionStartedAt=0;renderArcade();}
-}
-document.addEventListener('keydown',event=>{
-  if(currentPage!=='arcade'||arcadeMode!=='snake')return;
-  const map={ArrowUp:[0,-1],w:[0,-1],ArrowDown:[0,1],s:[0,1],ArrowLeft:[-1,0],a:[-1,0],ArrowRight:[1,0],d:[1,0]};
-  const key=event.key.length===1?event.key.toLowerCase():event.key;
-  if(map[key]){event.preventDefault();setArcadeSnakeDirection(...map[key]);}
-});
 
 function uiIcon(name, extra = '') {
   return `<svg class="icon ${extra}" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
@@ -1644,7 +1526,6 @@ $('logout').onclick = async () => {
   go('dashboard');
 };
 
-view.addEventListener('click', handleArcadeAction);
 document.querySelectorAll('.sidebar nav button').forEach(btn => btn.onclick = () => go(btn.dataset.page));
 document.querySelector('.brand')?.addEventListener('click', () => go('dashboard'));
 $('adminQuick')?.addEventListener('click', () => go(isDelivery() ? 'deliveries' : 'admin'));

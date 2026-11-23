@@ -2236,3 +2236,32 @@ html, body {
 
 /* Place admin-only Add Item action under the inventory intro. */
 .inventory-add-action{margin-top:12px;display:flex;justify-content:flex-start}
+
+/* Serial Numbers: match the visual scale of the other management pages. */
+.serial-manager-stats { margin-bottom: 18px; gap: 17px; }
+.serial-manager-stats .stat { min-height: 135px; padding: 21px 23px; }
+.serial-manager-stats .stat small { font-size: 12px; }
+.serial-manager-stats .stat b { font-size: 36px; margin: 12px 0 7px; }
+.serial-manager-stats .stat span { font-size: 11px; }
+.serial-manager-panel { padding: 23px 25px; }
+.serial-manager-panel > .head { align-items: center; margin-bottom: 19px; }
+.serial-manager-panel .head h2 { font-size: 21px; margin-top: 8px; }
+.serial-manager-panel .section-label { font-size: 10px; }
+.serial-manager-panel .filters { gap: 10px; }
+.serial-manager-panel .filters .search,
+.serial-manager-panel .filters select { height: 42px; font-size: 12px; }
+.serial-manager-list .item.admin-row { min-height: 76px; padding: 15px 2px; gap: 15px; }
+.serial-manager-list .serial-icon { width: 44px; height: 44px; flex: 0 0 44px; font-size: 19px; border-radius: 13px; }
+.serial-manager-list .itemmain b { font-size: 14px; line-height: 1.4; }
+.serial-manager-list .itemmain span { font-size: 11px; line-height: 1.5; margin-top: 5px; }
+.serial-manager-list .smallbtn { font-size: 11px; min-height: 37px; padding: 9px 13px; }
+.serial-manager-list .pill { font-size: 11px; padding: 9px 12px; }
+@media (max-width: 700px) {
+  .serial-manager-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .serial-manager-stats .stat { min-height: 115px; padding: 16px; }
+  .serial-manager-panel { padding: 17px; }
+  .serial-manager-panel > .head { align-items: flex-start; }
+  .serial-manager-panel .filters { width: 100%; }
+  .serial-manager-panel .filters .search { min-width: 0; flex: 1 1 170px; }
+  .serial-manager-list .item.admin-row { gap: 10px; }
+}

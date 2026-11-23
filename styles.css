@@ -2169,3 +2169,67 @@ html, body {
   .theme-fields { gap:5px; }
   .theme-field { padding:6px 8px; min-height:40px; }
 }
+
+
+/* Waves Technology & Services identity — replacing only the decorative bell logo.
+   Existing bell SVG remains available exclusively for notifications. */
+.sidebar .brand-mark {
+  width: 164px;
+  height: 78px;
+  margin: 0 auto 5px;
+  background: transparent;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  position: relative;
+}
+.sidebar .brand-mark::before {
+  content: '';
+  position: absolute;
+  inset: 17px 20px 4px;
+  border-radius: 999px;
+  background: rgba(19,183,255,.25);
+  filter: blur(28px);
+  pointer-events: none;
+}
+.sidebar .brand .waves-brand-logo {
+  display: block;
+  position: relative;
+  width: 164px;
+  height: auto;
+  max-height: 77px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(62,210,255,.85))
+          drop-shadow(0 0 16px rgba(2,178,255,.49))
+          drop-shadow(0 0 23px color-mix(in srgb, var(--glow-color, #aaffef) 35%, transparent));
+  transition: filter .2s ease, transform .2s ease;
+}
+.sidebar .brand:hover .waves-brand-logo {
+  transform: translateY(-1px);
+  filter: drop-shadow(0 0 9px rgba(67,212,255,.95))
+          drop-shadow(0 0 21px rgba(13,167,255,.64));
+}
+.sidebar .brand-caption {
+  font-size: 11px;
+  letter-spacing: -.015em;
+  text-transform: none;
+}
+.sidebar .sidebar-system .system-icon {
+  overflow: visible;
+}
+.sidebar .sidebar-system .waves-system-logo {
+  display:block;
+  width: 37px;
+  height: auto;
+  max-height: 30px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 5px rgba(40,197,255,.68))
+          drop-shadow(0 0 10px rgba(0,168,255,.43));
+}
+@media (max-width: 1100px) and (min-width: 701px) {
+  .sidebar .brand-mark { width: 145px; height: 69px; }
+  .sidebar .brand .waves-brand-logo { width: 145px; max-height: 69px; }
+  .sidebar .brand-caption { font-size: 9.5px; }
+}

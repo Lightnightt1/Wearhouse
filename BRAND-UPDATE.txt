@@ -1,0 +1,11 @@
+Wearhouse - Waves Technology and Services branding update
+
+The original sidebar bell has been replaced by the supplied Waves logo with a blue glow.
+The site title remains Wearhouse; subtitle now reads: waves technology and services.
+The little system status emblem and the browser favicon use the same Waves symbol.
+The functional notifications button still uses a bell.
+No JavaScript behavior, inventory, user roles, delivery logic, or database schema was changed.
+
+Publish: upload all files in this archive to the ROOT of your existing GitHub Pages repository.
+Make sure the two NEW files waves-mark.png and favicon.png are uploaded along with index.html, styles.css and favicon.svg.
+Do not upload the parent directory. Commit the files and hard refresh your web page (Ctrl + F5).

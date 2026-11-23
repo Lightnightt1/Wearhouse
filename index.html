@@ -6,8 +6,8 @@
 <title>Wearhouse — Inventory & Delivery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=18">
-<link rel="stylesheet" href="styles.css?v=19">
+<link rel="icon" type="image/png" href="favicon.png?v=24">
+<link rel="stylesheet" href="styles.css?v=24">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -39,9 +39,9 @@
 <div id="app" class="app">
   <aside class="sidebar glass" aria-label="Wearhouse navigation">
     <button class="brand" data-page="dashboard" aria-label="Wearhouse dashboard">
-      <span class="brand-mark"><svg class="brand-bell icon" aria-hidden="true"><use href="#i-bell"></use></svg></span>
+      <span class="brand-mark"><img class="waves-brand-logo" src="waves-mark.png?v=24" alt="Waves Technology and Services logo" width="649" height="288" decoding="async"></span>
       <span class="brand-name">Wearhouse</span>
-      <span class="brand-caption">Warehouse Management System</span>
+      <span class="brand-caption">waves technology and services</span>
     </button>
     <nav aria-label="Main navigation">
       <button data-page="dashboard" class="active"><svg class="icon"><use href="#i-dashboard"></use></svg><b>Dashboard</b></button>
@@ -53,7 +53,7 @@
     </nav>
     <div class="side-bottom">
       <div class="sidebar-system glass">
-        <div class="system-top"><span class="system-icon"><svg class="icon"><use href="#i-bell"></use></svg></span><span><strong>Wearhouse</strong><small>Inventory &amp; deliveries</small></span></div>
+        <div class="system-top"><span class="system-icon"><img class="waves-system-logo" src="waves-mark.png?v=24" alt="" aria-hidden="true" width="649" height="288"></span><span><strong>Wearhouse</strong><small>Inventory &amp; deliveries</small></span></div>
         <div class="system-live"><span class="status"><i id="liveDot"></i><span id="statusText">Connecting</span></span><span class="live-caption">System status</span></div>
       </div>
       <button id="logout" class="logout hidden"><svg class="icon"><use href="#i-logout"></use></svg><b>Sign out</b></button>
@@ -76,7 +76,7 @@
   </main>
 </div>
 
-<dialog id="themeDialog"><div class="modal glass theme-modal"><button type="button" class="close" id="themeClose" aria-label="Close">×</button><div class="theme-heading"><span class="theme-heading-icon"><svg class="icon"><use href="#i-palette"></use></svg></span><div><span class="eyebrow">PERSONAL APPEARANCE</span><h2>Color studio</h2><p class="theme-help">Choose your four colors.</p></div></div><div class="theme-section-title"><span>COLOR CONTROLS</span><small>Choose each layer independently</small></div><div class="theme-fields"><label class="theme-field"><span class="theme-swatch-copy"><b>Text</b><small>Headings and readable content</small></span><input id="themeTextColor" type="color" value="#f4ffff" aria-label="Text color"></label><label class="theme-field"><span class="theme-swatch-copy"><b>Background</b><small>Main workspace surface</small></span><input id="themeBgColor" type="color" value="#052a30" aria-label="Background color"></label><label class="theme-field"><span class="theme-swatch-copy"><b>Glow</b><small>Highlights and soft lighting</small></span><input id="themeAccentColor" type="color" value="#aaffef" aria-label="Glow color"></label><label class="theme-field"><span class="theme-swatch-copy"><b>Logos &amp; icons</b><small>Bell, navigation and interface icons</small></span><input id="themeSurfaceColor" type="color" value="#aaffef" aria-label="Logos and icons color"></label></div><div class="theme-actions"><button type="button" class="secondary" id="themeReset">Reset defaults</button><button type="button" class="primary" id="themeSave">Save appearance</button></div><p id="themeMsg" class="error"></p></div></dialog>
+<dialog id="themeDialog"><div class="modal glass theme-modal"><button type="button" class="close" id="themeClose" aria-label="Close">×</button><div class="theme-heading"><span class="theme-heading-icon"><svg class="icon"><use href="#i-palette"></use></svg></span><div><span class="eyebrow">PERSONAL APPEARANCE</span><h2>Color studio</h2><p class="theme-help">Choose your four colors.</p></div></div><div class="theme-section-title"><span>COLOR CONTROLS</span><small>Choose each layer independently</small></div><div class="theme-fields"><label class="theme-field"><span class="theme-swatch-copy"><b>Text</b><small>Headings and readable content</small></span><input id="themeTextColor" type="color" value="#f4ffff" aria-label="Text color"></label><label class="theme-field"><span class="theme-swatch-copy"><b>Background</b><small>Main workspace surface</small></span><input id="themeBgColor" type="color" value="#052a30" aria-label="Background color"></label><label class="theme-field"><span class="theme-swatch-copy"><b>Glow</b><small>Highlights and soft lighting</small></span><input id="themeAccentColor" type="color" value="#aaffef" aria-label="Glow color"></label><label class="theme-field"><span class="theme-swatch-copy"><b>Logos &amp; icons</b><small>Navigation and interface icons</small></span><input id="themeSurfaceColor" type="color" value="#aaffef" aria-label="Logos and icons color"></label></div><div class="theme-actions"><button type="button" class="secondary" id="themeReset">Reset defaults</button><button type="button" class="primary" id="themeSave">Save appearance</button></div><p id="themeMsg" class="error"></p></div></dialog>
 <dialog id="deliveryEvidenceDialog"><div class="modal glass evidence-modal"><button type="button" class="close" onclick="deliveryEvidenceDialog.close()">×</button><span class="eyebrow">DELIVERY EVIDENCE</span><h2>Delivery proof.</h2><div id="deliveryEvidenceContent">Loading evidence…</div></div></dialog>
 
 <dialog id="loginDialog"><form id="loginForm" class="modal glass">

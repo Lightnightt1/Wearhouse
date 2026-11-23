@@ -2233,3 +2233,6 @@ html, body {
   .sidebar .brand .waves-brand-logo { width: 145px; max-height: 69px; }
   .sidebar .brand-caption { font-size: 9.5px; }
 }
+
+/* Place admin-only Add Item action under the inventory intro. */
+.inventory-add-action{margin-top:12px;display:flex;justify-content:flex-start}

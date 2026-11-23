@@ -533,10 +533,9 @@ function inventory() {
   const cats = [...new Set(products.map(p => p.category).filter(Boolean))].sort();
   const locs = [...new Set(products.map(p => p.location).filter(Boolean))].sort();
   view.innerHTML = `
-    <section class="hero compact"><span class="eyebrow">LIVE INVENTORY</span><h1>What we<br><em>have.</em></h1><p>Search current warehouse stock by product, category or location.</p></section>
+    <section class="hero compact"><span class="eyebrow">LIVE INVENTORY</span><h1>What we<br><em>have.</em></h1><p>Search current warehouse stock by product, category or location.</p>${isAdmin ? `<div class="inventory-add-action"><button type="button" class="primary" onclick="openAdd()">＋ Add Item</button></div>` : ''}</section>
     <section class="panel glass inventory-panel">
       <div class="head wrap"><div><small class="section-label">CATALOG</small><h2>All items <span class="muted">${products.length} products</span></h2></div>
-      ${isAdmin ? `<button type="button" class="primary" onclick="openAdd()">＋ Add Item</button>` : ''}
       <div class="filters"><input id="filter" class="search" placeholder="Search inventory…"><select id="catFilter"><option value="">All categories</option>${cats.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select><select id="locFilter"><option value="">All locations</option>${locs.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('')}</select></div></div>
       <div id="cards" class="cards">${cards(products)}</div>
     </section>`;
